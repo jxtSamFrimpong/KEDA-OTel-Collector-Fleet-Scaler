@@ -1,0 +1,43 @@
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: otel-backends
+  namespace: observability
+  annotations:
+    keda.otel.collector-fleet.scaler/fleet-profile: stateful
+spec:
+  scaleTargetRef:
+    name: otel-backends
+    kind: StatefulSet
+  pollingInterval: 15
+  cooldownPeriod: 300
+  minReplicaCount: 2
+  maxReplicaCount: 10
+  advanced:
+    horizontalPodAutoscalerConfig:
+      behavior:
+        scaleUp:
+          stabilizationWindowSeconds: 60
+          policies:
+            - type: Pods
+              value: 1
+              periodSeconds: 120
+        scaleDown:
+          stabilizationWindowSeconds: 300
+          policies:
+            - type: Pods
+              value: 1
+              periodSeconds: 180
+  triggers:
+    - type: external
+      metadata:
+        scalerAddress: keda-otel-collector-fleet-scaler.observability.svc:9090
+        metric: memory_rss_bytes
+        targetValue: "1610612736"
+        aggregation: max
+        backendService: otel-backends
+        backendNamespace: observability
+        prometheusPort: "8888"
+        prometheusPath: /metrics
+        activationThreshold: "0"
+        metricName: otelcol_backend_memory_rss_bytes

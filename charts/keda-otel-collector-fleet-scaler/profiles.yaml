@@ -1,0 +1,29 @@
+# Fleet profile presets encoded for operators / Helm consumers.
+# Source of truth in Go: pkg/config/profiles.go
+# Docs: docs/fleet-profiles.md
+
+forward:
+  workloadKind: Deployment
+  preStopSeconds: 15
+  terminationGracePeriodSeconds: 30
+  cooldownPeriodSeconds: 60
+  scaleUpStabilizationSeconds: 30
+  scaleDownStabilizationSeconds: 60
+  scaleUpPodsPerPeriod: 2
+  scaleUpPeriodSeconds: 60
+  scaleDownPodsPerPeriod: 1
+  scaleDownPeriodSeconds: 60
+  recommendedMinReplicas: 2
+
+stateful:
+  workloadKind: StatefulSet
+  preStopSeconds: 35
+  terminationGracePeriodSeconds: 60
+  cooldownPeriodSeconds: 300
+  scaleUpStabilizationSeconds: 60
+  scaleDownStabilizationSeconds: 300
+  scaleUpPodsPerPeriod: 1
+  scaleUpPeriodSeconds: 120
+  scaleDownPodsPerPeriod: 1
+  scaleDownPeriodSeconds: 180
+  recommendedMinReplicas: 2

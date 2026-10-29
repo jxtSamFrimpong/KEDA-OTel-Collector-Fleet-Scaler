@@ -1,0 +1,18 @@
+KEDA OTel Collector Fleet Scaler installed.
+
+gRPC address for ScaledObject triggers:
+  {{ include "keda-otel-collector-fleet-scaler.fullname" . }}.{{ .Release.Namespace }}.svc:{{ .Values.service.grpcPort }}
+
+Example trigger metadata:
+  type: external
+  metadata:
+    scalerAddress: "{{ include "keda-otel-collector-fleet-scaler.fullname" . }}.{{ .Release.Namespace }}.svc:{{ .Values.service.grpcPort }}"
+    metric: exporter_queue_utilization
+    targetValue: "0.65"
+    backendService: otel-backends
+
+Docs: https://github.com/hubtel/keda-otel-collector-fleet-scaler/tree/main/docs
+
+Fleet examples:
+  kubectl apply -k deploy/examples/forward
+  kubectl apply -k deploy/examples/stateful

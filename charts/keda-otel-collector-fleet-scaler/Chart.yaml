@@ -1,0 +1,16 @@
+apiVersion: v2
+name: keda-otel-collector-fleet-scaler
+description: KEDA external scaler for OpenTelemetry collector fleets (TraceID gateway pattern)
+type: application
+version: 0.1.0
+appVersion: "0.1.0"
+keywords:
+  - keda
+  - opentelemetry
+  - autoscaling
+  - otel
+home: https://github.com/hubtel/keda-otel-collector-fleet-scaler
+maintainers:
+  - name: Hubtel
+sources:
+  - https://github.com/hubtel/keda-otel-collector-fleet-scaler

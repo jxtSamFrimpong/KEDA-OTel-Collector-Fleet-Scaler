@@ -1,0 +1,30 @@
+{{- if .Values.rbac.create }}
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: {{ include "keda-otel-collector-fleet-scaler.fullname" . }}
+  labels:
+    app.kubernetes.io/name: {{ include "keda-otel-collector-fleet-scaler.name" . }}
+rules:
+  - apiGroups: ["discovery.k8s.io"]
+    resources: ["endpointslices"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: [""]
+    resources: ["endpoints", "services", "pods"]
+    verbs: ["get", "list", "watch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: {{ include "keda-otel-collector-fleet-scaler.fullname" . }}
+  labels:
+    app.kubernetes.io/name: {{ include "keda-otel-collector-fleet-scaler.name" . }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: {{ include "keda-otel-collector-fleet-scaler.fullname" . }}
+subjects:
+  - kind: ServiceAccount
+    name: {{ include "keda-otel-collector-fleet-scaler.serviceAccountName" . }}
+    namespace: {{ .Release.Namespace }}
+{{- end }}

@@ -1,0 +1,83 @@
+# Fleet profile: stateful (StatefulSet, long drain ≥ decision_wait)
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: otel-backends
+  namespace: observability
+  labels:
+    app.kubernetes.io/name: otel-backends
+    app.kubernetes.io/component: backend
+    keda.otel.collector-fleet.scaler/fleet-profile: stateful
+spec:
+  serviceName: otel-backends
+  replicas: 2
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: otel-backends
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: otel-backends
+        app.kubernetes.io/component: backend
+    spec:
+      terminationGracePeriodSeconds: 60
+      containers:
+        - name: otelcol
+          image: otel/opentelemetry-collector-contrib:0.114.0
+          args: ["--config=/conf/collector.yaml"]
+          env:
+            - name: DD_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: datadog-secret
+                  key: api-key
+                  optional: true
+          ports:
+            - name: otlp-grpc
+              containerPort: 4317
+            - name: metrics
+              containerPort: 8888
+          # Requires Kubernetes >= 1.30 SleepAction (works with distroless otelcol images).
+          lifecycle:
+            preStop:
+              sleep:
+                seconds: 35
+          readinessProbe:
+            tcpSocket:
+              port: otlp-grpc
+            initialDelaySeconds: 5
+            periodSeconds: 5
+          volumeMounts:
+            - name: config
+              mountPath: /conf
+          resources:
+            requests:
+              cpu: 200m
+              memory: 1Gi
+            limits:
+              cpu: "1"
+              memory: 2Gi
+      volumes:
+        - name: config
+          configMap:
+            name: otel-backend-config
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: otel-backends
+  namespace: observability
+  labels:
+    app.kubernetes.io/name: otel-backends
+spec:
+  clusterIP: None
+  publishNotReadyAddresses: false
+  selector:
+    app.kubernetes.io/name: otel-backends
+  ports:
+    - name: otlp-grpc
+      port: 4317
+      targetPort: otlp-grpc
+    - name: metrics
+      port: 8888
+      targetPort: metrics

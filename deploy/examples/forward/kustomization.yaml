@@ -1,0 +1,17 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: observability
+resources:
+  - namespace.yaml
+  - gateway.yaml
+  - backend.yaml
+  - scaledobject.yaml
+configMapGenerator:
+  - name: otel-gateway-config
+    files:
+      - collector.yaml=../../../config/collector/gateway.yaml
+  - name: otel-backend-config
+    files:
+      - collector.yaml=../../../config/collector/backend-forward.yaml
+generatorOptions:
+  disableNameSuffixHash: true
