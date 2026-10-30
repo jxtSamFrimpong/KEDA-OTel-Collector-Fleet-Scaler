@@ -1,0 +1,222 @@
+# Local OrbStack demo: OTLP affinity + load generator Jobs.
+# Sends known TraceIDs (multi-span, staggered) then sustained random load.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: otlp-demo-scripts
+  namespace: observability
+  labels:
+    app.kubernetes.io/name: otlp-demo
+data:
+  affinity_test.py: |
+    #!/usr/bin/env python3
+    """Send known TraceIDs with multiple staggered spans to the gateway."""
+    import os
+    import time
+    from opentelemetry import trace
+    from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import OTLPSpanExporter
+    from opentelemetry.sdk.resources import Resource
+    from opentelemetry.sdk.trace import TracerProvider
+    from opentelemetry.sdk.trace.export import SimpleSpanProcessor
+    from opentelemetry.trace import (
+        NonRecordingSpan,
+        SpanContext,
+        TraceFlags,
+        set_span_in_context,
+    )
+    from opentelemetry.trace.span import TraceState
+
+    ENDPOINT = os.environ.get("OTLP_ENDPOINT", "otel-gateway.observability.svc:4317")
+    # Fixed 32-hex TraceIDs for log grepping
+    TRACE_IDS = [
+        "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "cccccccccccccccccccccccccccccccc",
+        "dddddddddddddddddddddddddddddddd",
+        "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+    ]
+    SPANS_PER_TRACE = int(os.environ.get("SPANS_PER_TRACE", "5"))
+    SPAN_GAP_SEC = float(os.environ.get("SPAN_GAP_SEC", "0.4"))
+
+    def main():
+        resource = Resource.create({"service.name": "orbstack-affinity-demo"})
+        provider = TracerProvider(resource=resource)
+        exporter = OTLPSpanExporter(endpoint=ENDPOINT, insecure=True)
+        provider.add_span_processor(SimpleSpanProcessor(exporter))
+        trace.set_tracer_provider(provider)
+        tracer = trace.get_tracer("affinity-demo")
+
+        print(f"endpoint={ENDPOINT} traces={len(TRACE_IDS)} spans_each={SPANS_PER_TRACE}", flush=True)
+        for tid_hex in TRACE_IDS:
+            tid = int(tid_hex, 16)
+            print(f"sending trace_id={tid_hex}", flush=True)
+            for i in range(SPANS_PER_TRACE):
+                sid = (tid ^ (i + 1)) & ((1 << 64) - 1)
+                if sid == 0:
+                    sid = i + 1
+                parent_ctx = SpanContext(
+                    trace_id=tid,
+                    span_id=sid,
+                    is_remote=True,
+                    trace_flags=TraceFlags(TraceFlags.SAMPLED),
+                    trace_state=TraceState(),
+                )
+                parent = set_span_in_context(NonRecordingSpan(parent_ctx))
+                with tracer.start_as_current_span(
+                    f"affinity-span-{i}",
+                    context=parent,
+                    attributes={"demo.trace_id": tid_hex, "demo.span_index": i},
+                ) as span:
+                    # Assert SDK inherited the forced TraceID
+                    got = format(span.get_span_context().trace_id, "032x")
+                    if got != tid_hex:
+                        raise SystemExit(f"trace id mismatch want={tid_hex} got={got}")
+                    time.sleep(0.05)
+                time.sleep(SPAN_GAP_SEC)
+        provider.force_flush(timeout_millis=10000)
+        print("affinity send complete", flush=True)
+        time.sleep(2)
+
+    if __name__ == "__main__":
+        main()
+
+  load_test.py: |
+    #!/usr/bin/env python3
+    """Sustained OTLP trace load against the gateway."""
+    import os
+    import random
+    import time
+    from opentelemetry import trace
+    from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import OTLPSpanExporter
+    from opentelemetry.sdk.resources import Resource
+    from opentelemetry.sdk.trace import TracerProvider
+    from opentelemetry.sdk.trace.export import BatchSpanProcessor
+
+    ENDPOINT = os.environ.get("OTLP_ENDPOINT", "otel-gateway.observability.svc:4317")
+    DURATION_SEC = int(os.environ.get("DURATION_SEC", "120"))
+    TRACES_PER_SEC = float(os.environ.get("TRACES_PER_SEC", "80"))
+    SPANS_PER_TRACE = int(os.environ.get("SPANS_PER_TRACE", "4"))
+
+    def main():
+        resource = Resource.create({"service.name": "orbstack-load-demo"})
+        provider = TracerProvider(resource=resource)
+        exporter = OTLPSpanExporter(endpoint=ENDPOINT, insecure=True)
+        provider.add_span_processor(BatchSpanProcessor(exporter, max_export_batch_size=64))
+        trace.set_tracer_provider(provider)
+        tracer = trace.get_tracer("load-demo")
+
+        interval = 1.0 / TRACES_PER_SEC
+        end = time.time() + DURATION_SEC
+        sent = 0
+        print(f"load start endpoint={ENDPOINT} rate={TRACES_PER_SEC}/s duration={DURATION_SEC}s", flush=True)
+        while time.time() < end:
+            with tracer.start_as_current_span("load-root", attributes={"demo.load": True}):
+                for i in range(SPANS_PER_TRACE - 1):
+                    with tracer.start_as_current_span(f"load-child-{i}"):
+                        time.sleep(0.001)
+            sent += 1
+            time.sleep(interval)
+            if sent % 100 == 0:
+                print(f"sent_traces={sent}", flush=True)
+        provider.force_flush(timeout_millis=15000)
+        print(f"load complete sent_traces={sent}", flush=True)
+
+    if __name__ == "__main__":
+        main()
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: otlp-affinity-test
+  namespace: observability
+  labels:
+    app.kubernetes.io/name: otlp-affinity-test
+spec:
+  ttlSecondsAfterFinished: 600
+  backoffLimit: 1
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: otlp-affinity-test
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: affinity
+          image: python:3.13-slim
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: OTLP_ENDPOINT
+              value: otel-gateway.observability.svc:4317
+            - name: SPANS_PER_TRACE
+              value: "5"
+            - name: SPAN_GAP_SEC
+              value: "0.5"
+          command: ["bash", "-lc"]
+          args:
+            - |
+              set -euo pipefail
+              pip install --no-cache-dir -q \
+                'opentelemetry-api==1.27.0' \
+                'opentelemetry-sdk==1.27.0' \
+                'opentelemetry-exporter-otlp-proto-grpc==1.27.0'
+              python /scripts/affinity_test.py
+          volumeMounts:
+            - name: scripts
+              mountPath: /scripts
+      volumes:
+        - name: scripts
+          configMap:
+            name: otlp-demo-scripts
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: otlp-load-test
+  namespace: observability
+  labels:
+    app.kubernetes.io/name: otlp-load-test
+spec:
+  ttlSecondsAfterFinished: 600
+  backoffLimit: 1
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: otlp-load-test
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: load
+          image: python:3.13-slim
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: OTLP_ENDPOINT
+              value: otel-gateway.observability.svc:4317
+            - name: DURATION_SEC
+              value: "90"
+            - name: TRACES_PER_SEC
+              value: "100"
+            - name: SPANS_PER_TRACE
+              value: "5"
+          command: ["bash", "-lc"]
+          args:
+            - |
+              set -euo pipefail
+              pip install --no-cache-dir -q \
+                'opentelemetry-api==1.27.0' \
+                'opentelemetry-sdk==1.27.0' \
+                'opentelemetry-exporter-otlp-proto-grpc==1.27.0'
+              python /scripts/load_test.py
+          volumeMounts:
+            - name: scripts
+              mountPath: /scripts
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: "1"
+              memory: 512Mi
+      volumes:
+        - name: scripts
+          configMap:
+            name: otlp-demo-scripts
