@@ -80,6 +80,7 @@ Platform teams own collector `config.yaml`; they declare the profile to match. S
 ## Documentation
 
 - [Architecture](docs/architecture.md)
+- [Scale metrics](docs/scale-metrics.md) (plain-language guide)
 - [Metric contract](docs/metric-contract.md)
 - [Fleet profiles](docs/fleet-profiles.md)
 - [Scale safety](docs/scale-safety.md)
