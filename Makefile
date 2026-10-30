@@ -1,5 +1,5 @@
-MODULE := github.com/hubtel/keda-otel-collector-fleet-scaler
-IMG ?= ghcr.io/hubtel/keda-otel-collector-fleet-scaler:dev
+MODULE := github.com/jxtSamFrimpong/keda-otel-collector-fleet-scaler
+IMG ?= keda-otel-collector-fleet-scaler:dev
 GO ?= go
 
 .PHONY: all generate build test fmt vet tidy docker-build

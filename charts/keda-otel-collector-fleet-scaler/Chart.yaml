@@ -9,8 +9,8 @@ keywords:
   - opentelemetry
   - autoscaling
   - otel
-home: https://github.com/hubtel/keda-otel-collector-fleet-scaler
+home: https://github.com/jxtSamFrimpong/KEDA-OTel-Collector-Fleet-Scaler
 maintainers:
-  - name: Hubtel
+  - name: jxtSamFrimpong
 sources:
-  - https://github.com/hubtel/keda-otel-collector-fleet-scaler
+  - https://github.com/jxtSamFrimpong/KEDA-OTel-Collector-Fleet-Scaler

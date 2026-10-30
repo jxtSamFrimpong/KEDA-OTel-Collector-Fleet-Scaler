@@ -1,4 +1,4 @@
-module github.com/hubtel/keda-otel-collector-fleet-scaler
+module github.com/jxtSamFrimpong/keda-otel-collector-fleet-scaler
 
 go 1.23.0
 

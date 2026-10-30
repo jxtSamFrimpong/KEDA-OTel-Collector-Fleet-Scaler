@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"math"
 
-	"github.com/hubtel/keda-otel-collector-fleet-scaler/pkg/config"
+	"github.com/jxtSamFrimpong/keda-otel-collector-fleet-scaler/pkg/config"
 )
 
 // Aggregate combines per-pod contract values.

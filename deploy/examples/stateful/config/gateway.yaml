@@ -1,0 +1,51 @@
+# Reference gateway collector: TraceID loadbalancing to backend headless Service.
+# Type key "loadbalancing" works on collector-contrib 0.114+ (newer also accept
+# "load_balancing"). Pair with k8s resolver RBAC (get/list/watch EndpointSlices).
+#
+# Note: on 0.114.x, queue/retry/timeout belong under protocol.otlp only — not at
+# the loadbalancing exporter root.
+
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
+      http:
+        endpoint: 0.0.0.0:4318
+
+processors:
+  memory_limiter:
+    check_interval: 1s
+    limit_mib: 512
+    spike_limit_mib: 128
+  batch:
+    send_batch_size: 1024
+    timeout: 5s
+
+exporters:
+  loadbalancing:
+    routing_key: traceID
+    protocol:
+      otlp:
+        timeout: 10s
+        tls:
+          insecure: true
+        sending_queue:
+          enabled: true
+        retry_on_failure:
+          enabled: true
+    resolver:
+      k8s:
+        service: otel-backends.observability
+        ports:
+          - 4317
+
+service:
+  telemetry:
+    metrics:
+      address: 0.0.0.0:8888
+  pipelines:
+    traces:
+      receivers: [otlp]
+      processors: [memory_limiter, batch]
+      exporters: [loadbalancing]

@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"log/slog"
 
-	"github.com/hubtel/keda-otel-collector-fleet-scaler/pkg/config"
+	"github.com/jxtSamFrimpong/keda-otel-collector-fleet-scaler/pkg/config"
 )
 
 // Evaluator resolves endpoints, scrapes Prometheus, and aggregates contract metrics.

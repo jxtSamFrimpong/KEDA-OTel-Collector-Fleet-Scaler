@@ -4,9 +4,9 @@ import (
 	"context"
 	"testing"
 
-	pb "github.com/hubtel/keda-otel-collector-fleet-scaler/api/externalscaler"
-	"github.com/hubtel/keda-otel-collector-fleet-scaler/pkg/config"
-	"github.com/hubtel/keda-otel-collector-fleet-scaler/pkg/metrics"
+	pb "github.com/jxtSamFrimpong/keda-otel-collector-fleet-scaler/api/externalscaler"
+	"github.com/jxtSamFrimpong/keda-otel-collector-fleet-scaler/pkg/config"
+	"github.com/jxtSamFrimpong/keda-otel-collector-fleet-scaler/pkg/metrics"
 )
 
 func TestGetMetricSpec(t *testing.T) {

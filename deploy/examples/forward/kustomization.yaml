@@ -9,9 +9,9 @@ resources:
 configMapGenerator:
   - name: otel-gateway-config
     files:
-      - collector.yaml=../../../config/collector/gateway.yaml
+      - collector.yaml=config/gateway.yaml
   - name: otel-backend-config
     files:
-      - collector.yaml=../../../config/collector/backend-forward.yaml
+      - collector.yaml=config/backend-debug.yaml
 generatorOptions:
   disableNameSuffixHash: true

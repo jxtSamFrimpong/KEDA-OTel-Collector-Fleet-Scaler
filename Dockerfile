@@ -1,6 +1,6 @@
 FROM golang:1.23-alpine AS build
 WORKDIR /src
-RUN apk add --no-cache git ca-certificates
+# alpine image already includes ca-certificates; avoid apk when offline/flaky
 COPY go.mod go.sum ./
 RUN go mod download
 COPY . .

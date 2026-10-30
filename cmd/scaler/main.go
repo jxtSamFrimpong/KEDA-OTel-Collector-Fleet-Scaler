@@ -20,9 +20,9 @@ import (
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 
-	pb "github.com/hubtel/keda-otel-collector-fleet-scaler/api/externalscaler"
-	"github.com/hubtel/keda-otel-collector-fleet-scaler/pkg/metrics"
-	"github.com/hubtel/keda-otel-collector-fleet-scaler/pkg/scaler"
+	pb "github.com/jxtSamFrimpong/keda-otel-collector-fleet-scaler/api/externalscaler"
+	"github.com/jxtSamFrimpong/keda-otel-collector-fleet-scaler/pkg/metrics"
+	"github.com/jxtSamFrimpong/keda-otel-collector-fleet-scaler/pkg/scaler"
 )
 
 func main() {

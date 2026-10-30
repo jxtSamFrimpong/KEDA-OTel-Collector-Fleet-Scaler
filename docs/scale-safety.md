@@ -99,20 +99,13 @@ re-route after sub-exporter retries exhaust:
 
 ```yaml
 exporters:
-  load_balancing:
-    timeout: 30s
-    sending_queue:
-      enabled: true
-      num_consumers: 10
-      queue_size: 1000
-    retry_on_failure:
-      enabled: true
-      initial_interval: 1s
-      max_interval: 30s
-      max_elapsed_time: 300s
+  loadbalancing:
+    routing_key: traceID
     protocol:
       otlp:
         timeout: 10s
+        tls:
+          insecure: true
         sending_queue:
           enabled: true
         retry_on_failure:

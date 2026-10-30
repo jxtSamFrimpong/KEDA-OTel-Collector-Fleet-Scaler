@@ -35,7 +35,7 @@ Not the same as [Kedify otel-add-on](https://github.com/kedify/otel-add-on) (tha
 make test
 make build
 # or
-docker build -t ghcr.io/hubtel/keda-otel-collector-fleet-scaler:dev .
+docker build -t keda-otel-collector-fleet-scaler:dev .
 helm install keda-otel-collector-fleet-scaler charts/keda-otel-collector-fleet-scaler -n observability --create-namespace
 ```
 

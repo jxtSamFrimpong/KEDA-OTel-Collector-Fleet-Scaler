@@ -3,7 +3,7 @@ package metrics
 import (
 	"testing"
 
-	"github.com/hubtel/keda-otel-collector-fleet-scaler/pkg/config"
+	"github.com/jxtSamFrimpong/keda-otel-collector-fleet-scaler/pkg/config"
 )
 
 func TestAggregate(t *testing.T) {

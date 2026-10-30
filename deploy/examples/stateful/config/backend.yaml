@@ -1,0 +1,55 @@
+# Stateful backend example with tail sampling (fleet profile: stateful).
+# decision_wait must be ≤ profile preStop / termination grace.
+
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
+
+processors:
+  memory_limiter:
+    check_interval: 1s
+    limit_mib: 1536
+    spike_limit_mib: 384
+  tail_sampling:
+    decision_wait: 30s
+    num_traces: 50000
+    expected_new_traces_per_sec: 1000
+    policies:
+      - name: errors-and-high-latency
+        type: status_code
+        status_code:
+          status_codes: [ERROR]
+      - name: probabilistic
+        type: probabilistic
+        probabilistic:
+          sampling_percentage: 10
+  batch:
+    send_batch_size: 2048
+    timeout: 5s
+
+exporters:
+  datadog:
+    api:
+      site: datadoghq.com
+      key: ${env:DD_API_KEY}
+    sending_queue:
+      enabled: true
+      num_consumers: 20
+      queue_size: 1000
+
+service:
+  telemetry:
+    metrics:
+      readers:
+        - pull:
+            exporter:
+              prometheus:
+                host: "0.0.0.0"
+                port: 8888
+  pipelines:
+    traces:
+      receivers: [otlp]
+      processors: [memory_limiter, tail_sampling, batch]
+      exporters: [datadog]

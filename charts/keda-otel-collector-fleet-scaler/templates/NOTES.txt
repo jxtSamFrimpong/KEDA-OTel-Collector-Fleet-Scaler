@@ -11,7 +11,7 @@ Example trigger metadata:
     targetValue: "0.65"
     backendService: otel-backends
 
-Docs: https://github.com/hubtel/keda-otel-collector-fleet-scaler/tree/main/docs
+Docs: https://github.com/jxtSamFrimpong/KEDA-OTel-Collector-Fleet-Scaler/tree/main/docs
 
 Fleet examples:
   kubectl apply -k deploy/examples/forward

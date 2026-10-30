@@ -1,8 +1,8 @@
 # Default values for keda-otel-collector-fleet-scaler.
 
 image:
-  repository: ghcr.io/hubtel/keda-otel-collector-fleet-scaler
-  tag: "0.1.0"
+  repository: keda-otel-collector-fleet-scaler
+  tag: "dev"
   pullPolicy: IfNotPresent
 
 replicaCount: 2

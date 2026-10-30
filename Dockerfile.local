@@ -1,0 +1,7 @@
+# Fast local image: prebuilt linux binary at bin/scaler-linux
+FROM gcr.io/distroless/static-debian12:nonroot
+WORKDIR /
+COPY bin/scaler-linux /scaler
+USER nonroot:nonroot
+EXPOSE 9090 8080
+ENTRYPOINT ["/scaler"]

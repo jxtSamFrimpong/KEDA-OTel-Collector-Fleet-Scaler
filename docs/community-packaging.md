@@ -44,8 +44,8 @@ Differentiate from [Kedify otel-add-on](https://github.com/kedify/otel-add-on):
 
 | Item | Value |
 |---|---|
-| Go module | `github.com/hubtel/keda-otel-collector-fleet-scaler` |
-| Container image | `ghcr.io/hubtel/keda-otel-collector-fleet-scaler` (override in Helm) |
+| Go module | `github.com/jxtSamFrimpong/keda-otel-collector-fleet-scaler` |
+| Container image | `keda-otel-collector-fleet-scaler` (override in Helm) |
 | Default gRPC port | `9090` |
 | Health HTTP port | `8080` (`/healthz`, `/readyz`) |
 
@@ -63,4 +63,4 @@ Differentiate from [Kedify otel-add-on](https://github.com/kedify/otel-add-on):
 1. Tag `v0.x` while the metric contract may still change
 2. Publish multi-arch container images
 3. Helm chart version aligned with appVersion
-4. Announce as Hubtel/community external scaler for OTel collector fleets
+4. Announce as a community external scaler for OTel collector fleets

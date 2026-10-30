@@ -6,9 +6,9 @@ import (
 	"log/slog"
 	"time"
 
-	pb "github.com/hubtel/keda-otel-collector-fleet-scaler/api/externalscaler"
-	"github.com/hubtel/keda-otel-collector-fleet-scaler/pkg/config"
-	"github.com/hubtel/keda-otel-collector-fleet-scaler/pkg/metrics"
+	pb "github.com/jxtSamFrimpong/keda-otel-collector-fleet-scaler/api/externalscaler"
+	"github.com/jxtSamFrimpong/keda-otel-collector-fleet-scaler/pkg/config"
+	"github.com/jxtSamFrimpong/keda-otel-collector-fleet-scaler/pkg/metrics"
 )
 
 // Server implements the KEDA ExternalScaler gRPC service.

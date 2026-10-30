@@ -1,5 +1,9 @@
-# Reference gateway collector: TraceID load_balancing to backend headless Service.
-# Pair with k8s resolver RBAC (get/list/watch EndpointSlices).
+# Reference gateway collector: TraceID loadbalancing to backend headless Service.
+# Type key "loadbalancing" works on collector-contrib 0.114+ (newer also accept
+# "load_balancing"). Pair with k8s resolver RBAC (get/list/watch EndpointSlices).
+#
+# Note: on 0.114.x, queue/retry/timeout belong under protocol.otlp only — not at
+# the loadbalancing exporter root.
 
 receivers:
   otlp:
@@ -19,18 +23,8 @@ processors:
     timeout: 5s
 
 exporters:
-  load_balancing:
+  loadbalancing:
     routing_key: traceID
-    timeout: 30s
-    sending_queue:
-      enabled: true
-      num_consumers: 10
-      queue_size: 1000
-    retry_on_failure:
-      enabled: true
-      initial_interval: 1s
-      max_interval: 30s
-      max_elapsed_time: 300s
     protocol:
       otlp:
         timeout: 10s
@@ -49,14 +43,9 @@ exporters:
 service:
   telemetry:
     metrics:
-      readers:
-        - pull:
-            exporter:
-              prometheus:
-                host: "0.0.0.0"
-                port: 8888
+      address: 0.0.0.0:8888
   pipelines:
     traces:
       receivers: [otlp]
       processors: [memory_limiter, batch]
-      exporters: [load_balancing]
+      exporters: [loadbalancing]
