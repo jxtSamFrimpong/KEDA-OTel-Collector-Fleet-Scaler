@@ -63,8 +63,14 @@ jobs:
           context: .
           file: ./Dockerfile
           platforms: linux/amd64,linux/arm64
-          push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+          # Artifact Hub's Trivy path maps GHCR MANIFEST_UNKNOWN to "image not found".
+          # Default Buildx emits an OCI index (+ provenance unknown/unknown). Clients
+          # that omit OCI Accept headers get: "OCI index found, but Accept header does
+          # not support OCI indexes". Docker media types + no attestations avoid that.
+          provenance: false
+          sbom: false
+          outputs: type=image,push=${{ github.event_name != 'pull_request' }},oci-mediatypes=false
           cache-from: type=gha
           cache-to: type=gha,mode=max

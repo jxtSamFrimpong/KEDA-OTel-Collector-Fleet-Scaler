@@ -35,7 +35,7 @@ Published images (multi-arch `linux/amd64` + `linux/arm64`):
 
 ```text
 ghcr.io/jxtsamfrimpong/keda-otel-collector-fleet-scaler:latest
-ghcr.io/jxtsamfrimpong/keda-otel-collector-fleet-scaler:0.1.0
+ghcr.io/jxtsamfrimpong/keda-otel-collector-fleet-scaler:0.1.1
 ghcr.io/jxtsamfrimpong/keda-otel-collector-fleet-scaler:sha-<short>
 ```
 
@@ -43,7 +43,7 @@ ghcr.io/jxtsamfrimpong/keda-otel-collector-fleet-scaler:sha-<short>
 # Install from the OCI Helm chart (recommended)
 helm install keda-otel-collector-fleet-scaler \
   oci://ghcr.io/jxtsamfrimpong/charts/keda-otel-collector-fleet-scaler \
-  --version 0.1.0 \
+  --version 0.1.1 \
   -n observability --create-namespace
 
 # Or pull the image and apply raw manifests
@@ -51,7 +51,21 @@ docker pull ghcr.io/jxtsamfrimpong/keda-otel-collector-fleet-scaler:latest
 kubectl apply -f deploy/scaler/
 ```
 
-GHCR packages created by CI start as private. After the first successful publish, open the package on GitHub → **Package settings** → set visibility to **Public** (one-time).
+GHCR packages created by CI start as **private**. Artifact Hub can only scan public images; a private package produces `error scanning image …: image not found`. After the first successful publish, make **both** packages Public (one-time each):
+
+1. Open [github.com/jxtSamFrimpong?tab=packages](https://github.com/jxtSamFrimpong?tab=packages)
+2. Click **`keda-otel-collector-fleet-scaler`** (app image) → **Package settings** (right sidebar) → **Change visibility** → **Public** → confirm
+3. Click **`charts/keda-otel-collector-fleet-scaler`** (Helm OCI chart) → **Package settings** → **Change visibility** → **Public** → confirm
+
+Verify anonymously (must work **without** `docker login`):
+
+```bash
+docker logout ghcr.io
+docker manifest inspect ghcr.io/jxtsamfrimpong/keda-otel-collector-fleet-scaler:0.1.1
+helm show chart oci://ghcr.io/jxtsamfrimpong/charts/keda-otel-collector-fleet-scaler --version 0.1.1
+```
+
+**Artifact Hub `image not found` is not fixed by making packages public alone.** Chart `0.1.0` still points at an image published as an OCI index (+ provenance). AH’s scanner omits OCI `Accept` headers; GHCR then returns `MANIFEST_UNKNOWN`, which AH maps to `image not found`. That failure sticks on the scanned chart version: same-tag image overwrite and Control Panel refresh do **not** clear it. Fix by publishing a **new** chart version (`0.1.1+`) whose `artifacthub.io/images` tag matches an image built with Docker media types and no provenance/SBOM (`publish-image.yml`: `provenance: false`, `sbom: false`, `oci-mediatypes=false`), then wait for AH to index the new version.
 
 Local development:
 
@@ -136,16 +150,16 @@ Artifact Hub indexes public chart repositories; it does not host chart tarballs.
 ```bash
 helm install keda-otel-collector-fleet-scaler \
   oci://ghcr.io/jxtsamfrimpong/charts/keda-otel-collector-fleet-scaler \
-  --version 0.1.0 \
+  --version 0.1.1 \
   -n observability --create-namespace
 
-helm show values oci://ghcr.io/jxtsamfrimpong/charts/keda-otel-collector-fleet-scaler --version 0.1.0
+helm show values oci://ghcr.io/jxtsamfrimpong/charts/keda-otel-collector-fleet-scaler --version 0.1.1
 ```
 
 ### List the chart on Artifact Hub (one-time)
 
-1. Ensure the GHCR packages below are **Public**:
-   - `ghcr.io/jxtsamfrimpong/keda-otel-collector-fleet-scaler` (image)
+1. Ensure **both** GHCR packages are **Public** (exact clicks above):
+   - `ghcr.io/jxtsamfrimpong/keda-otel-collector-fleet-scaler` (app image — this is what AH Trivy scans via `artifacthub.io/images`)
    - `ghcr.io/jxtsamfrimpong/charts/keda-otel-collector-fleet-scaler` (Helm OCI chart)
 2. Sign in at [artifacthub.io](https://artifacthub.io) → **Control Panel** → **Add repository**.
 3. Kind: **Helm charts**. URL (OCI — one Artifact Hub repo per chart):
@@ -156,7 +170,9 @@ helm show values oci://ghcr.io/jxtsamfrimpong/charts/keda-otel-collector-fleet-s
 
 4. After Artifact Hub assigns a `repositoryID`, put it in [`artifacthub-repo.yml`](artifacthub-repo.yml) and let CI re-push the `artifacthub.io` OCI tag (or push manually with [oras](https://oras.land/) as described in the [Artifact Hub OCI docs](https://artifacthub.io/docs/topics/repositories/helm-charts/#oci-support)). That enables ownership claim / verified publisher.
 
-Official docs: [Helm charts on Artifact Hub](https://artifacthub.io/docs/topics/repositories/helm-charts/) · [OCI support](https://artifacthub.io/docs/topics/repositories/helm-charts/#oci-support) · [Helm annotations](https://artifacthub.io/docs/topics/annotations/helm/).
+**Scan errors / sticky `image not found`:** Public packages are necessary but not sufficient. Chart `0.1.0` failed because the image was an OCI index (+ provenance); AH’s scanner hit `MANIFEST_UNKNOWN` without OCI Accept headers. Same-tag overwrite and Control Panel refresh do **not** clear that sticky failure. Publish a new chart version (e.g. `0.1.1`) with `artifacthub.io/images` pointing at a Docker-mediatype image (`provenance: false`, `sbom: false`, `oci-mediatypes=false` in `publish-image.yml`). Do **not** whitelist the image unless you intentionally want to skip the security report.
+
+Official docs: [Helm charts on Artifact Hub](https://artifacthub.io/docs/topics/repositories/helm-charts/) · [OCI support](https://artifacthub.io/docs/topics/repositories/helm-charts/#oci-support) · [Helm annotations](https://artifacthub.io/docs/topics/annotations/helm/) · [Security reports](https://artifacthub.io/docs/topics/security_report/).
 
 ## Documentation
 
@@ -197,10 +213,10 @@ git tag v0.1.0
 git push origin v0.1.0
 ```
 
-4. `publish-image.yml` tags the multi-arch image as `X.Y.Z`, `X.Y`, plus `latest` / `sha-*` as configured. `publish-chart.yml` packages and pushes the OCI chart at the chart `version`.
-5. Confirm GHCR packages stay **Public**, then refresh the repository on Artifact Hub so the image scan picks up the new tag.
+4. `publish-image.yml` tags the multi-arch image as `X.Y.Z`, `X.Y`, plus `latest` / `sha-*` as configured. It must keep Docker media types (`provenance: false`, `sbom: false`, `oci-mediatypes=false`) so Artifact Hub can resolve the tag. `publish-chart.yml` packages and pushes the OCI chart at the chart `version`.
+5. Confirm GHCR packages stay **Public**. AH indexes the **new** chart version; do not expect same-tag image overwrite or Control Panel refresh to clear a prior sticky scan failure on an older chart version.
 
-Do **not** rely on `main`-only image publishes for Artifact Hub: pushes to `main` produce `latest` / `sha-*`, not the semver tag the chart declares.
+Do **not** rely on `main`-only image publishes for Artifact Hub: pushes to `main` produce `latest` / `sha-*`, not the semver tag the chart’s `artifacthub.io/images` annotation declares (`…:0.1.1`). Keep owner paths **lowercase** (`jxtsamfrimpong`); GHCR rejects mixed-case refs.
 
 ## License
 

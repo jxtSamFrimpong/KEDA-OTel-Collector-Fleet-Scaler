@@ -2,8 +2,8 @@ apiVersion: v2
 name: keda-otel-collector-fleet-scaler
 description: KEDA external scaler for OpenTelemetry collector fleets (TraceID gateway pattern)
 type: application
-version: 0.1.0
-appVersion: "0.1.0"
+version: 0.1.1
+appVersion: "0.1.1"
 keywords:
   - keda
   - opentelemetry
@@ -25,10 +25,12 @@ annotations:
       url: https://github.com/jxtSamFrimpong/KEDA-OTel-Collector-Fleet-Scaler/issues
   artifacthub.io/images: |
     - name: scaler
-      image: ghcr.io/jxtsamfrimpong/keda-otel-collector-fleet-scaler:0.1.0
+      image: ghcr.io/jxtsamfrimpong/keda-otel-collector-fleet-scaler:0.1.1
       platforms:
         - linux/amd64
         - linux/arm64
   artifacthub.io/changes: |
+    - kind: fixed
+      description: Republish image as Docker manifest list (no OCI provenance) so Artifact Hub security scanning can resolve ghcr.io tags
     - kind: added
       description: Initial public chart release with GHCR OCI packaging
