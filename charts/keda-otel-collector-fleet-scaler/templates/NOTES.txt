@@ -16,3 +16,12 @@ Docs: https://github.com/jxtSamFrimpong/KEDA-OTel-Collector-Fleet-Scaler/tree/ma
 Fleet examples:
   kubectl apply -k deploy/examples/forward
   kubectl apply -k deploy/examples/stateful
+
+External OTLP (optional L4 LoadBalancer on gateway ports 4317/4318 only):
+  kubectl apply -k deploy/examples/external-lb
+  kubectl -n {{ .Values.fleet.namespace }} get svc otel-gateway
+{{- if and .Values.fleet.enabled (eq .Values.fleet.gateway.service.type "LoadBalancer") }}
+
+Helm fleet.gateway.service.type is LoadBalancer — when fleet Service templates ship,
+OTLP will be reachable via that Service EXTERNAL-IP (not the scaler address above).
+{{- end }}

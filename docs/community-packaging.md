@@ -15,6 +15,7 @@
 │   ├── scaler/             # Scaler Deployment/Service/RBAC manifests
 │   └── examples/
 │       ├── forward/        # Stateless Datadog-forward example
+│       ├── external-lb/    # Optional LoadBalancer overlay for gateway OTLP
 │       └── stateful/       # Tail-sampling example
 ├── charts/keda-otel-collector-fleet-scaler/# Helm chart (scaler + optional fleet templates)
 ├── docs/                   # Architecture and contracts

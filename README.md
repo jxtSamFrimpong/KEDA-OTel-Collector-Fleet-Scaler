@@ -50,7 +50,36 @@ kubectl apply -k deploy/examples/forward   # or deploy/examples/stateful
 
 ### 3. Point apps at the gateway
 
-OTLP endpoint: `otel-gateway.observability.svc:4317` (gRPC).
+In-cluster OTLP (default ClusterIP Service):
+
+```text
+otel-gateway.<namespace>.svc:4317   # gRPC
+otel-gateway.<namespace>.svc:4318   # HTTP
+```
+
+Example: `otel-gateway.observability.svc:4317`.
+
+### External clients
+
+The gateway Service stays **ClusterIP** by default. For optional L4 LoadBalancer access (OTLP **4317** / **4318** only — never the scaler):
+
+```bash
+kubectl apply -k deploy/examples/external-lb
+kubectl -n observability get svc otel-gateway   # EXTERNAL-IP / hostname
+```
+
+Point SDKs at the LB address:
+
+```bash
+# gRPC
+export OTEL_EXPORTER_OTLP_ENDPOINT=http://<EXTERNAL-IP>:4317
+
+# HTTP
+export OTEL_EXPORTER_OTLP_ENDPOINT=http://<EXTERNAL-IP>:4318
+export OTEL_EXPORTER_OTLP_PROTOCOL=http/protobuf
+```
+
+Uncomment cloud annotations / `loadBalancerSourceRanges` in the overlay (or base Service comments) for AWS NLB, GCP, Azure, or source IP allowlists. No Ingress in this path.
 
 ## ScaledObject metadata
 

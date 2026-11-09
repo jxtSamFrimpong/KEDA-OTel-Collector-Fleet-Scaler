@@ -1,0 +1,28 @@
+# Strategic merge patch: flip otel-gateway to LoadBalancer for external OTLP.
+# Uncomment cloud-specific annotations as needed. Restrict with loadBalancerSourceRanges.
+apiVersion: v1
+kind: Service
+metadata:
+  name: otel-gateway
+  namespace: observability
+  # annotations:
+  #   # AWS NLB (internal)
+  #   service.beta.kubernetes.io/aws-load-balancer-type: "nlb"
+  #   service.beta.kubernetes.io/aws-load-balancer-scheme: "internal"
+  #   # GCP internal LB
+  #   cloud.google.com/load-balancer-type: "Internal"
+  #   # Azure internal LB
+  #   service.beta.kubernetes.io/azure-load-balancer-internal: "true"
+  # OrbStack: type LoadBalancer is enough; EXTERNAL-IP appears shortly (often localhost or a cluster VIP).
+spec:
+  type: LoadBalancer
+  # loadBalancerSourceRanges:
+  #   - "10.0.0.0/8"
+  #   - "192.168.0.0/16"
+  ports:
+    - name: otlp-grpc
+      port: 4317
+      targetPort: otlp-grpc
+    - name: otlp-http
+      port: 4318
+      targetPort: otlp-http

@@ -34,6 +34,7 @@ flowchart TB
 | Gateway collectors | OTLP ingest + TraceID route |
 | Backend collectors | User `config.yaml` (forward or stateful) |
 | Helm chart / examples | Wire Service, RBAC, ScaledObject, profiles |
+| Gateway Service | ClusterIP by default; optional LoadBalancer overlay for external OTLP (`4317`/`4318` only) |
 
 ## Docs map
 

@@ -15,6 +15,8 @@ Scaling signals are collector self-telemetry (`exporter_queue_utilization`,
 
 Manifests: [`deploy/demo/affinity-loadgen.yaml`](../deploy/demo/affinity-loadgen.yaml)
 
+For clients outside the cluster, opt into the gateway LoadBalancer overlay and read the address with `kubectl --context orbstack -n observability get svc otel-gateway` (EXTERNAL-IP). In-cluster Jobs keep using `otel-gateway.observability.svc:4317`.
+
 ## Re-run (affinity + scale-out)
 
 ```bash

@@ -1,0 +1,19 @@
+# Opt-in L4 LoadBalancer for external OTLP clients (ports 4317 + 4318 only).
+# Lives beside forward/ (not under it) so kubectl kustomize does not hit a
+# nested-root cycle with newer kustomize builds.
+#
+#   kubectl apply -k deploy/examples/forward
+#   kubectl apply -k deploy/examples/external-lb
+#
+# Or in one shot (this overlay includes the forward base):
+#
+#   kubectl apply -k deploy/examples/external-lb
+#
+# Then: kubectl -n observability get svc otel-gateway
+# Never expose the scaler :9090 here. No Ingress in this overlay.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - ../forward
+patches:
+  - path: service-loadbalancer.yaml

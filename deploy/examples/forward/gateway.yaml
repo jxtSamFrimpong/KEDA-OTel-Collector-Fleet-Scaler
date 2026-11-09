@@ -80,6 +80,10 @@ spec:
           configMap:
             name: otel-gateway-config
 ---
+# Gateway Service: ClusterIP by default (in-cluster OTLP only).
+# Opt-in external access: patch type to LoadBalancer (ports 4317/4318 only).
+# Prefer the overlay: kubectl apply -k deploy/examples/external-lb
+# Never expose the scaler gRPC port (:9090) on this Service.
 apiVersion: v1
 kind: Service
 metadata:
@@ -87,7 +91,15 @@ metadata:
   namespace: observability
   labels:
     app.kubernetes.io/name: otel-gateway
+  # Optional LoadBalancer annotations / source ranges (uncomment when type=LoadBalancer):
+  # annotations:
+  #   service.beta.kubernetes.io/aws-load-balancer-type: "nlb"
+  #   service.beta.kubernetes.io/aws-load-balancer-scheme: "internal"
+  #   cloud.google.com/load-balancer-type: "Internal"
+  #   service.beta.kubernetes.io/azure-load-balancer-internal: "true"
 spec:
+  type: ClusterIP
+  # loadBalancerSourceRanges: ["10.0.0.0/8"]  # restrict when type=LoadBalancer
   selector:
     app.kubernetes.io/name: otel-gateway
   ports:

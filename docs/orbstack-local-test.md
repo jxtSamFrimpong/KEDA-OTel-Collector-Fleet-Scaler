@@ -55,6 +55,14 @@ kubectl --context orbstack apply -k deploy/examples/forward
 
 The forward example uses a `debug` backend exporter for local runs (see `deploy/examples/forward/config/backend-debug.yaml`). Gateway uses `loadbalancing` + k8s resolver and needs Endpoints + EndpointSlice list/watch RBAC.
 
+Optional external OTLP (LoadBalancer on `otel-gateway` only):
+
+```bash
+kubectl --context orbstack apply -k deploy/examples/external-lb
+kubectl --context orbstack -n observability get svc otel-gateway
+# Use EXTERNAL-IP (often localhost on OrbStack) as OTEL_EXPORTER_OTLP_ENDPOINT host
+```
+
 ## Verify
 
 ```bash

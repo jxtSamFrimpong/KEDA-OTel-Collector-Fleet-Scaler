@@ -35,6 +35,23 @@ fleet:
   gateway:
     replicas: 2
     image: otel/opentelemetry-collector-contrib:0.114.0
+    # Gateway OTLP Service (future fleet templates). Today the primary path is the
+    # kustomize overlay: deploy/examples/external-lb
+    # Never put scaler ports here — OTLP 4317/4318 only.
+    service:
+      type: ClusterIP # set LoadBalancer for external OTLP clients
+      annotations: {}
+      # Examples (when type=LoadBalancer):
+      # annotations:
+      #   service.beta.kubernetes.io/aws-load-balancer-type: "nlb"
+      #   service.beta.kubernetes.io/aws-load-balancer-scheme: "internal"
+      #   cloud.google.com/load-balancer-type: "Internal"
+      #   service.beta.kubernetes.io/azure-load-balancer-internal: "true"
+      loadBalancerSourceRanges: []
+      # loadBalancerSourceRanges: ["10.0.0.0/8"]
+      otlpGrpcPort: 4317
+      otlpHttpPort: 4318
+
 
   backend:
     # kind/preStop overridden by profile when left empty / zero
