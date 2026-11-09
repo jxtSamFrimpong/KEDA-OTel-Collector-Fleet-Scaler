@@ -64,9 +64,10 @@ After the first CI publish, set each GHCR package visibility to **Public** in th
 
 ## Release shape
 
-1. Tag `v0.x` while the metric contract may still change
-2. Publish multi-arch container images to GHCR (`publish-image.yml`)
-3. Package and push the Helm chart as OCI to `oci://ghcr.io/jxtsamfrimpong/charts` (`publish-chart.yml`)
-4. Keep chart `version` / `appVersion` aligned; bump before tagging when releasing
-5. Register the OCI chart URL on [Artifact Hub](https://artifacthub.io) (one-time; see README)
-6. Announce as a community external scaler for OTel collector fleets
+1. Bump chart `version` and `appVersion` together before release (`appVersion` must match the image tag Artifact Hub scans)
+2. Tag `vX.Y.Z` on `main` and push the tag (see README **Releasing**) — this is what publishes semver image tags (`X.Y.Z`, `X.Y`)
+3. `publish-image.yml` builds multi-arch images to GHCR; `main` alone only pushes `latest` / `sha-*`
+4. `publish-chart.yml` packages and pushes the Helm chart as OCI to `oci://ghcr.io/jxtsamfrimpong/charts`
+5. Keep GHCR image + chart packages **Public**; refresh Artifact Hub after the first semver image lands
+6. Register the OCI chart URL on [Artifact Hub](https://artifacthub.io) (one-time; see README)
+7. Announce as a community external scaler for OTel collector fleets

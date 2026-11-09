@@ -184,6 +184,24 @@ CI workflows:
 | Container image → GHCR | `.github/workflows/publish-image.yml` | `main`, tags `v*` (PRs build only) |
 | Helm chart → GHCR OCI | `.github/workflows/publish-chart.yml` | `main`, tags `v*` |
 
+## Releasing
+
+A release is a **git tag** `vX.Y.Z` on `main`. Pushing that tag publishes both the container image and the Helm chart.
+
+1. Bump chart `version` and `appVersion` together in `charts/keda-otel-collector-fleet-scaler/Chart.yaml` (keep `appVersion` aligned with the image semver Artifact Hub will scan). Leave `values.yaml` `image.tag` empty so the Deployment uses `Chart.AppVersion`.
+2. Update `artifacthub.io/images` in `Chart.yaml` if the image reference changed.
+3. Merge to `main`, then tag and push:
+
+```bash
+git tag v0.1.0
+git push origin v0.1.0
+```
+
+4. `publish-image.yml` tags the multi-arch image as `X.Y.Z`, `X.Y`, plus `latest` / `sha-*` as configured. `publish-chart.yml` packages and pushes the OCI chart at the chart `version`.
+5. Confirm GHCR packages stay **Public**, then refresh the repository on Artifact Hub so the image scan picks up the new tag.
+
+Do **not** rely on `main`-only image publishes for Artifact Hub: pushes to `main` produce `latest` / `sha-*`, not the semver tag the chart declares.
+
 ## License
 
 Apache License 2.0 — see [LICENSE](LICENSE).
