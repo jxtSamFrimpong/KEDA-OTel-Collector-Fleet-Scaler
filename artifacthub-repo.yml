@@ -1,12 +1,9 @@
 # Artifact Hub repository metadata for the OCI Helm chart.
 #
-# OCI chart URL to register on https://artifacthub.io (one repo per chart):
+# OCI chart URL registered on https://artifacthub.io (one repo per chart):
 #   oci://ghcr.io/jxtsamfrimpong/charts/keda-otel-collector-fleet-scaler
 #
-# After Artifact Hub assigns a repositoryID, add:
-#   repositoryID: "<uuid-from-artifact-hub>"
-# then re-run publish-chart (or push the artifacthub.io tag with oras).
-#
 # Docs: https://artifacthub.io/docs/topics/repositories/helm-charts/#oci-support
+repositoryID: c30e53dd-5861-4bfb-afcc-7590be53ebe8
 owners:
   - name: jxtSamFrimpong
