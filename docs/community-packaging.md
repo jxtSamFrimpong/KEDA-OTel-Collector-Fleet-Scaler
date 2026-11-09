@@ -46,9 +46,12 @@ Differentiate from [Kedify otel-add-on](https://github.com/kedify/otel-add-on):
 | Item | Value |
 |---|---|
 | Go module | `github.com/jxtSamFrimpong/keda-otel-collector-fleet-scaler` |
-| Container image | `keda-otel-collector-fleet-scaler` (override in Helm) |
+| Container image | `ghcr.io/jxtsamfrimpong/keda-otel-collector-fleet-scaler` |
+| Helm chart (OCI) | `oci://ghcr.io/jxtsamfrimpong/charts/keda-otel-collector-fleet-scaler` |
 | Default gRPC port | `9090` |
 | Health HTTP port | `8080` (`/healthz`, `/readyz`) |
+
+After the first CI publish, set each GHCR package visibility to **Public** in the GitHub UI (packages start private).
 
 ## Contribution checklist
 
@@ -62,6 +65,8 @@ Differentiate from [Kedify otel-add-on](https://github.com/kedify/otel-add-on):
 ## Release shape
 
 1. Tag `v0.x` while the metric contract may still change
-2. Publish multi-arch container images
-3. Helm chart version aligned with appVersion
-4. Announce as a community external scaler for OTel collector fleets
+2. Publish multi-arch container images to GHCR (`publish-image.yml`)
+3. Package and push the Helm chart as OCI to `oci://ghcr.io/jxtsamfrimpong/charts` (`publish-chart.yml`)
+4. Keep chart `version` / `appVersion` aligned; bump before tagging when releasing
+5. Register the OCI chart URL on [Artifact Hub](https://artifacthub.io) (one-time; see README)
+6. Announce as a community external scaler for OTel collector fleets

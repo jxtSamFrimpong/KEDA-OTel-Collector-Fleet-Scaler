@@ -20,7 +20,7 @@ spec:
       serviceAccountName: {{ include "keda-otel-collector-fleet-scaler.serviceAccountName" . }}
       containers:
         - name: scaler
-          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           args:
             - -grpc-addr=:{{ .Values.service.grpcPort }}

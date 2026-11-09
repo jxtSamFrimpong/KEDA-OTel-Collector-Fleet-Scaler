@@ -14,3 +14,21 @@ maintainers:
   - name: jxtSamFrimpong
 sources:
   - https://github.com/jxtSamFrimpong/KEDA-OTel-Collector-Fleet-Scaler
+annotations:
+  artifacthub.io/license: Apache-2.0
+  artifacthub.io/category: monitoring-logging
+  artifacthub.io/prerelease: "false"
+  artifacthub.io/links: |
+    - name: source
+      url: https://github.com/jxtSamFrimpong/KEDA-OTel-Collector-Fleet-Scaler
+    - name: support
+      url: https://github.com/jxtSamFrimpong/KEDA-OTel-Collector-Fleet-Scaler/issues
+  artifacthub.io/images: |
+    - name: scaler
+      image: ghcr.io/jxtsamfrimpong/keda-otel-collector-fleet-scaler:0.1.0
+      platforms:
+        - linux/amd64
+        - linux/arm64
+  artifacthub.io/changes: |
+    - kind: added
+      description: Initial public chart release with GHCR OCI packaging

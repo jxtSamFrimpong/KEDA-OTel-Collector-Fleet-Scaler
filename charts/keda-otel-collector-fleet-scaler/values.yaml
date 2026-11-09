@@ -1,8 +1,9 @@
 # Default values for keda-otel-collector-fleet-scaler.
 
 image:
-  repository: keda-otel-collector-fleet-scaler
-  tag: "dev"
+  repository: ghcr.io/jxtsamfrimpong/keda-otel-collector-fleet-scaler
+  # Empty tag falls back to Chart.appVersion in the Deployment template.
+  tag: ""
   pullPolicy: IfNotPresent
 
 replicaCount: 2

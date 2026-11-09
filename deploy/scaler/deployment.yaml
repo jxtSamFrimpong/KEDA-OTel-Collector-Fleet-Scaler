@@ -18,7 +18,7 @@ spec:
       serviceAccountName: keda-otel-collector-fleet-scaler
       containers:
         - name: scaler
-          image: keda-otel-collector-fleet-scaler:dev
+          image: ghcr.io/jxtsamfrimpong/keda-otel-collector-fleet-scaler:latest
           imagePullPolicy: IfNotPresent
           args:
             - -grpc-addr=:9090

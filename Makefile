@@ -12,14 +12,17 @@ generate:
 build:
 	$(GO) build -o bin/scaler ./cmd/scaler
 
+# Scaler packages only — deploy/demo/cmd/loadgen is a standalone demo (extra deps).
+TEST_PKGS := ./pkg/... ./cmd/... ./api/...
+
 test:
-	$(GO) test ./...
+	$(GO) test $(TEST_PKGS)
 
 fmt:
-	$(GO) fmt ./...
+	$(GO) fmt $(TEST_PKGS)
 
 vet:
-	$(GO) vet ./...
+	$(GO) vet $(TEST_PKGS)
 
 tidy:
 	$(GO) mod tidy

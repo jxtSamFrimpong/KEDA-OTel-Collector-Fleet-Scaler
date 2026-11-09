@@ -29,12 +29,35 @@ Not the same as [Kedify otel-add-on](https://github.com/kedify/otel-add-on) (tha
 
 ## Quick start
 
-### 1. Build / install the scaler
+### 1. Pull / install the scaler
+
+Published images (multi-arch `linux/amd64` + `linux/arm64`):
+
+```text
+ghcr.io/jxtsamfrimpong/keda-otel-collector-fleet-scaler:latest
+ghcr.io/jxtsamfrimpong/keda-otel-collector-fleet-scaler:0.1.0
+ghcr.io/jxtsamfrimpong/keda-otel-collector-fleet-scaler:sha-<short>
+```
+
+```bash
+# Install from the OCI Helm chart (recommended)
+helm install keda-otel-collector-fleet-scaler \
+  oci://ghcr.io/jxtsamfrimpong/charts/keda-otel-collector-fleet-scaler \
+  --version 0.1.0 \
+  -n observability --create-namespace
+
+# Or pull the image and apply raw manifests
+docker pull ghcr.io/jxtsamfrimpong/keda-otel-collector-fleet-scaler:latest
+kubectl apply -f deploy/scaler/
+```
+
+GHCR packages created by CI start as private. After the first successful publish, open the package on GitHub → **Package settings** → set visibility to **Public** (one-time).
+
+Local development:
 
 ```bash
 make test
 make build
-# or
 docker build -t keda-otel-collector-fleet-scaler:dev .
 helm install keda-otel-collector-fleet-scaler charts/keda-otel-collector-fleet-scaler -n observability --create-namespace
 ```
@@ -44,7 +67,7 @@ helm install keda-otel-collector-fleet-scaler charts/keda-otel-collector-fleet-s
 Requires KEDA in the cluster and (for Datadog export) a Secret `datadog-secret`.
 
 ```bash
-kubectl apply -f deploy/scaler/
+kubectl apply -f deploy/scaler/          # if not using Helm for the scaler
 kubectl apply -k deploy/examples/forward   # or deploy/examples/stateful
 ```
 
@@ -106,6 +129,35 @@ See [docs/metric-contract.md](docs/metric-contract.md).
 
 Platform teams own collector `config.yaml`; they declare the profile to match. See [docs/fleet-profiles.md](docs/fleet-profiles.md) and [docs/scale-safety.md](docs/scale-safety.md).
 
+## Helm (OCI) and Artifact Hub
+
+Artifact Hub indexes public chart repositories; it does not host chart tarballs. This project publishes the chart to GHCR as an OCI artifact:
+
+```bash
+helm install keda-otel-collector-fleet-scaler \
+  oci://ghcr.io/jxtsamfrimpong/charts/keda-otel-collector-fleet-scaler \
+  --version 0.1.0 \
+  -n observability --create-namespace
+
+helm show values oci://ghcr.io/jxtsamfrimpong/charts/keda-otel-collector-fleet-scaler --version 0.1.0
+```
+
+### List the chart on Artifact Hub (one-time)
+
+1. Ensure the GHCR packages below are **Public**:
+   - `ghcr.io/jxtsamfrimpong/keda-otel-collector-fleet-scaler` (image)
+   - `ghcr.io/jxtsamfrimpong/charts/keda-otel-collector-fleet-scaler` (Helm OCI chart)
+2. Sign in at [artifacthub.io](https://artifacthub.io) → **Control Panel** → **Add repository**.
+3. Kind: **Helm charts**. URL (OCI — one Artifact Hub repo per chart):
+
+   ```text
+   oci://ghcr.io/jxtsamfrimpong/charts/keda-otel-collector-fleet-scaler
+   ```
+
+4. After Artifact Hub assigns a `repositoryID`, put it in [`artifacthub-repo.yml`](artifacthub-repo.yml) and let CI re-push the `artifacthub.io` OCI tag (or push manually with [oras](https://oras.land/) as described in the [Artifact Hub OCI docs](https://artifacthub.io/docs/topics/repositories/helm-charts/#oci-support)). That enables ownership claim / verified publisher.
+
+Official docs: [Helm charts on Artifact Hub](https://artifacthub.io/docs/topics/repositories/helm-charts/) · [OCI support](https://artifacthub.io/docs/topics/repositories/helm-charts/#oci-support) · [Helm annotations](https://artifacthub.io/docs/topics/annotations/helm/).
+
 ## Documentation
 
 - [Architecture](docs/architecture.md)
@@ -123,6 +175,14 @@ make build
 # Regenerate protobuf (requires protoc + plugins):
 make generate
 ```
+
+CI workflows:
+
+| Workflow | File | Trigger |
+|---|---|---|
+| Go tests | `.github/workflows/ci.yml` | PR / push to `main` |
+| Container image → GHCR | `.github/workflows/publish-image.yml` | `main`, tags `v*` (PRs build only) |
+| Helm chart → GHCR OCI | `.github/workflows/publish-chart.yml` | `main`, tags `v*` |
 
 ## License
 
