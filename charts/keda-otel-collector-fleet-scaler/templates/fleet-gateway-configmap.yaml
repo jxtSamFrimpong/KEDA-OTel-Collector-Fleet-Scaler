@@ -1,0 +1,58 @@
+{{- if .Values.fleet.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "keda-otel-collector-fleet-scaler.gatewayName" . }}-config
+  namespace: {{ include "keda-otel-collector-fleet-scaler.fleetNamespace" . }}
+  labels:
+    {{- include "keda-otel-collector-fleet-scaler.gatewayLabels" . | nindent 4 }}
+data:
+  collector.yaml: |
+{{- if .Values.fleet.gateway.config }}
+{{ tpl .Values.fleet.gateway.config . | nindent 4 }}
+{{- else }}
+    # Stock gateway: TraceID loadbalancing to backend headless Service.
+    # Type key "loadbalancing" works on collector-contrib 0.114+.
+    receivers:
+      otlp:
+        protocols:
+          grpc:
+            endpoint: 0.0.0.0:{{ .Values.fleet.gateway.service.otlpGrpcPort }}
+          http:
+            endpoint: 0.0.0.0:{{ .Values.fleet.gateway.service.otlpHttpPort }}
+    processors:
+      memory_limiter:
+        check_interval: 1s
+        limit_mib: 512
+        spike_limit_mib: 128
+      batch:
+        send_batch_size: 1024
+        timeout: 5s
+    exporters:
+      loadbalancing:
+        routing_key: traceID
+        protocol:
+          otlp:
+            timeout: 10s
+            tls:
+              insecure: true
+            sending_queue:
+              enabled: true
+            retry_on_failure:
+              enabled: true
+        resolver:
+          k8s:
+            service: {{ include "keda-otel-collector-fleet-scaler.backendResolverService" . }}
+            ports:
+              - {{ .Values.fleet.gateway.service.otlpGrpcPort }}
+    service:
+      telemetry:
+        metrics:
+          address: 0.0.0.0:{{ .Values.fleet.gateway.service.metricsPort }}
+      pipelines:
+        traces:
+          receivers: [otlp]
+          processors: [memory_limiter, batch]
+          exporters: [loadbalancing]
+{{- end }}
+{{- end }}

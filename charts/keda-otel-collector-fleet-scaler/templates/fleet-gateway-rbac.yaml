@@ -1,0 +1,39 @@
+{{- if .Values.fleet.enabled }}
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: {{ include "keda-otel-collector-fleet-scaler.gatewayServiceAccountName" . }}
+  namespace: {{ include "keda-otel-collector-fleet-scaler.fleetNamespace" . }}
+  labels:
+    {{- include "keda-otel-collector-fleet-scaler.gatewayLabels" . | nindent 4 }}
+---
+# loadbalancing k8s resolver needs EndpointSlices (+ legacy Endpoints).
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: {{ include "keda-otel-collector-fleet-scaler.fullname" . }}-gateway-loadbalancing
+  labels:
+    {{- include "keda-otel-collector-fleet-scaler.gatewayLabels" . | nindent 4 }}
+rules:
+  - apiGroups: ["discovery.k8s.io"]
+    resources: ["endpointslices"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: [""]
+    resources: ["endpoints"]
+    verbs: ["get", "list", "watch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: {{ include "keda-otel-collector-fleet-scaler.fullname" . }}-gateway-loadbalancing
+  labels:
+    {{- include "keda-otel-collector-fleet-scaler.gatewayLabels" . | nindent 4 }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: {{ include "keda-otel-collector-fleet-scaler.fullname" . }}-gateway-loadbalancing
+subjects:
+  - kind: ServiceAccount
+    name: {{ include "keda-otel-collector-fleet-scaler.gatewayServiceAccountName" . }}
+    namespace: {{ include "keda-otel-collector-fleet-scaler.fleetNamespace" . }}
+{{- end }}

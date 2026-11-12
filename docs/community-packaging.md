@@ -17,7 +17,7 @@
 │       ├── forward/        # Stateless Datadog-forward example
 │       ├── external-lb/    # Optional LoadBalancer overlay for gateway OTLP
 │       └── stateful/       # Tail-sampling example
-├── charts/keda-otel-collector-fleet-scaler/# Helm chart (scaler + optional fleet templates)
+├── charts/keda-otel-collector-fleet-scaler/# Helm chart (scaler + optional in-chart fleet via fleet.enabled)
 ├── docs/                   # Architecture and contracts
 ├── hack/                   # Codegen scripts
 └── test/                   # Unit + e2e placeholders

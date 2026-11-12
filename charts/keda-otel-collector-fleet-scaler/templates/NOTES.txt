@@ -1,27 +1,36 @@
-KEDA OTel Collector Fleet Scaler installed.
+KEDA OTel Collector Fleet Scaler {{ .Chart.Version }} installed.
 
 gRPC address for ScaledObject triggers:
-  {{ include "keda-otel-collector-fleet-scaler.fullname" . }}.{{ .Release.Namespace }}.svc:{{ .Values.service.grpcPort }}
+  {{ include "keda-otel-collector-fleet-scaler.scalerAddress" . }}
 
 Example trigger metadata:
   type: external
   metadata:
-    scalerAddress: "{{ include "keda-otel-collector-fleet-scaler.fullname" . }}.{{ .Release.Namespace }}.svc:{{ .Values.service.grpcPort }}"
-    metric: exporter_queue_utilization
-    targetValue: "0.65"
-    backendService: otel-backends
+    scalerAddress: "{{ include "keda-otel-collector-fleet-scaler.scalerAddress" . }}"
+    metric: {{ .Values.fleet.scalerTrigger.metric }}
+    targetValue: "{{ .Values.fleet.scalerTrigger.targetValue }}"
+    backendService: {{ include "keda-otel-collector-fleet-scaler.backendName" . }}
+    backendNamespace: {{ include "keda-otel-collector-fleet-scaler.fleetNamespace" . }}
 
 Docs: https://github.com/jxtSamFrimpong/KEDA-OTel-Collector-Fleet-Scaler/tree/main/docs
+{{- if .Values.fleet.enabled }}
 
-Fleet examples:
-  kubectl apply -k deploy/examples/forward
-  kubectl apply -k deploy/examples/stateful
+Fleet (in-chart) enabled — profile={{ include "keda-otel-collector-fleet-scaler.profile" . }}
+  Gateway OTLP:  {{ include "keda-otel-collector-fleet-scaler.gatewayName" . }}.{{ include "keda-otel-collector-fleet-scaler.fleetNamespace" . }}.svc:{{ .Values.fleet.gateway.service.otlpGrpcPort }} (gRPC) / :{{ .Values.fleet.gateway.service.otlpHttpPort }} (HTTP)
+  Backends:      {{ include "keda-otel-collector-fleet-scaler.backendName" . }} ({{ include "keda-otel-collector-fleet-scaler.backendKind" . }}, headless)
+  ScaledObject:  {{ if .Values.fleet.scaledObject.enabled }}enabled (requires KEDA CRDs){{ else }}disabled{{ end }}
+{{- if eq .Values.fleet.gateway.service.type "LoadBalancer" }}
 
-External OTLP (optional L4 LoadBalancer on gateway ports 4317/4318 only):
-  kubectl apply -k deploy/examples/external-lb
-  kubectl -n {{ .Values.fleet.namespace }} get svc otel-gateway
-{{- if and .Values.fleet.enabled (eq .Values.fleet.gateway.service.type "LoadBalancer") }}
+  Gateway Service type=LoadBalancer — OTLP EXTERNAL-IP / hostname:
+    kubectl -n {{ include "keda-otel-collector-fleet-scaler.fleetNamespace" . }} get svc {{ include "keda-otel-collector-fleet-scaler.gatewayName" . }}
+  Do not point apps at the scaler address above.
+{{- end }}
+{{- if and (ne (.Values.fleet.backend.exporter | default "datadog") "debug") }}
 
-Helm fleet.gateway.service.type is LoadBalancer — when fleet Service templates ship,
-OTLP will be reachable via that Service EXTERNAL-IP (not the scaler address above).
+  Datadog exporter expects Secret {{ .Values.fleet.datadog.secretName }} (key {{ .Values.fleet.datadog.secretKey }}); optional until set.
+{{- end }}
+{{- else }}
+
+Fleet is disabled (scaler only). Enable with --set fleet.enabled=true
+Reference kustomize overlays (optional): deploy/examples/forward | stateful | external-lb
 {{- end }}

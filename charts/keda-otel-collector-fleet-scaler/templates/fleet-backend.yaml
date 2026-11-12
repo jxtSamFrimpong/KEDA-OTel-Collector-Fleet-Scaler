@@ -1,0 +1,100 @@
+{{- if .Values.fleet.enabled }}
+{{- $kind := include "keda-otel-collector-fleet-scaler.backendKind" . -}}
+{{- $profile := include "keda-otel-collector-fleet-scaler.profile" . -}}
+{{- $preStop := include "keda-otel-collector-fleet-scaler.preStopSeconds" . -}}
+{{- $grace := include "keda-otel-collector-fleet-scaler.terminationGrace" . -}}
+{{- $resources := .Values.fleet.backend.resources -}}
+{{- if and (eq $profile "stateful") .Values.fleet.backend.statefulResources -}}
+{{- $resources = .Values.fleet.backend.statefulResources -}}
+{{- end -}}
+{{- $replicas := .Values.fleet.backend.replicas | default .Values.fleet.backend.minReplicas | default 2 -}}
+{{- /* When ScaledObject manages replicas, still set an initial count for first apply. */ -}}
+apiVersion: apps/v1
+kind: {{ $kind }}
+metadata:
+  name: {{ include "keda-otel-collector-fleet-scaler.backendName" . }}
+  namespace: {{ include "keda-otel-collector-fleet-scaler.fleetNamespace" . }}
+  labels:
+    {{- include "keda-otel-collector-fleet-scaler.backendLabels" . | nindent 4 }}
+spec:
+  {{- if eq $kind "StatefulSet" }}
+  serviceName: {{ include "keda-otel-collector-fleet-scaler.backendName" . }}
+  {{- end }}
+  replicas: {{ $replicas }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ include "keda-otel-collector-fleet-scaler.backendName" . }}
+      app.kubernetes.io/instance: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        {{- include "keda-otel-collector-fleet-scaler.backendLabels" . | nindent 8 }}
+    spec:
+      terminationGracePeriodSeconds: {{ $grace }}
+      containers:
+        - name: otelcol
+          image: {{ .Values.fleet.backend.image | quote }}
+          imagePullPolicy: {{ .Values.fleet.backend.imagePullPolicy }}
+          args: ["--config=/conf/collector.yaml"]
+          env:
+            - name: DD_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.fleet.datadog.secretName | quote }}
+                  key: {{ .Values.fleet.datadog.secretKey | quote }}
+                  optional: true
+          ports:
+            - name: otlp-grpc
+              containerPort: 4317
+            - name: metrics
+              containerPort: 8888
+          # Requires Kubernetes >= 1.30 SleepAction (works with distroless otelcol).
+          lifecycle:
+            preStop:
+              sleep:
+                seconds: {{ $preStop }}
+          readinessProbe:
+            tcpSocket:
+              port: otlp-grpc
+            initialDelaySeconds: 5
+            periodSeconds: 5
+          {{- if eq $profile "forward" }}
+          livenessProbe:
+            tcpSocket:
+              port: otlp-grpc
+            initialDelaySeconds: 15
+            periodSeconds: 20
+          {{- end }}
+          volumeMounts:
+            - name: config
+              mountPath: /conf
+          resources:
+            {{- toYaml $resources | nindent 12 }}
+      volumes:
+        - name: config
+          configMap:
+            name: {{ include "keda-otel-collector-fleet-scaler.backendName" . }}-config
+---
+# Headless Service: membership source for gateway load_balancing k8s resolver.
+# Do NOT set publishNotReadyAddresses: true — only Ready pods join the ring.
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "keda-otel-collector-fleet-scaler.backendName" . }}
+  namespace: {{ include "keda-otel-collector-fleet-scaler.fleetNamespace" . }}
+  labels:
+    {{- include "keda-otel-collector-fleet-scaler.backendLabels" . | nindent 4 }}
+spec:
+  clusterIP: None
+  publishNotReadyAddresses: false
+  selector:
+    app.kubernetes.io/name: {{ include "keda-otel-collector-fleet-scaler.backendName" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+  ports:
+    - name: otlp-grpc
+      port: 4317
+      targetPort: otlp-grpc
+    - name: metrics
+      port: 8888
+      targetPort: metrics
+{{- end }}

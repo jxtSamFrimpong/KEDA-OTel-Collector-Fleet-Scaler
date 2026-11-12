@@ -27,41 +27,95 @@ resources:
 rbac:
   create: true
 
-# Optional reference fleet. Disabled by default — enable for a turnkey demo.
+# Optional reference fleet (gateway + backends + ScaledObject).
+# Disabled by default so scaler-only installs stay unchanged.
+# Enable with: --set fleet.enabled=true
+# kustomize examples under deploy/examples/ remain optional reference only.
 fleet:
   enabled: false
   profile: forward # forward | stateful
-  namespace: observability
+  # Empty = Release.Namespace. Set only to place fleet outside the release NS.
+  namespace: ""
 
   gateway:
+    name: otel-gateway
+    serviceAccountName: "" # default: gateway.name
     replicas: 2
     image: otel/opentelemetry-collector-contrib:0.114.0
-    # Gateway OTLP Service (future fleet templates). Today the primary path is the
-    # kustomize overlay: deploy/examples/external-lb
-    # Never put scaler ports here — OTLP 4317/4318 only.
+    imagePullPolicy: IfNotPresent
+    # Optional full collector.yaml override (tpl-evaluated). Empty = stock TraceID LB config.
+    config: ""
+    resources:
+      requests:
+        cpu: 100m
+        memory: 256Mi
+      limits:
+        cpu: "1"
+        memory: 512Mi
+    # Gateway OTLP Service — never put scaler ports here (OTLP 4317/4318 only).
     service:
       type: ClusterIP # set LoadBalancer for external OTLP clients
       annotations: {}
       # Examples (when type=LoadBalancer):
       # annotations:
-      #   service.beta.kubernetes.io/aws-load-balancer-type: "nlb"
+      #   service.beta.kubernetes.io/aws-load-balancer-type: "external"
+      #   service.beta.kubernetes.io/aws-load-balancer-nlb-target-type: "ip"
       #   service.beta.kubernetes.io/aws-load-balancer-scheme: "internal"
+      #   service.beta.kubernetes.io/aws-load-balancer-security-groups: "sg-..."
       #   cloud.google.com/load-balancer-type: "Internal"
       #   service.beta.kubernetes.io/azure-load-balancer-internal: "true"
       loadBalancerSourceRanges: []
       # loadBalancerSourceRanges: ["10.0.0.0/8"]
       otlpGrpcPort: 4317
       otlpHttpPort: 4318
-
+      metricsPort: 8888
 
   backend:
+    name: otel-backends
     # kind/preStop overridden by profile when left empty / zero
     kind: ""
     preStopSeconds: 0
     terminationGracePeriodSeconds: 0
     image: otel/opentelemetry-collector-contrib:0.114.0
+    imagePullPolicy: IfNotPresent
+    # Stock config exporter: datadog (needs Secret) or debug (local/demo).
+    exporter: datadog # datadog | debug
+    # Optional full collector.yaml override (tpl-evaluated). Empty = stock by profile+exporter.
+    config: ""
+    replicas: 2 # initial replicas when ScaledObject is disabled
     minReplicas: 2
     maxReplicas: 20
+    resources:
+      requests:
+        cpu: 200m
+        memory: 512Mi
+      limits:
+        cpu: "1"
+        memory: 1Gi
+    # Extra resources for stateful profile when not overridden above via resources.
+    statefulResources:
+      requests:
+        cpu: 200m
+        memory: 1Gi
+      limits:
+        cpu: "1"
+        memory: 2Gi
+
+  # Requires KEDA CRDs (ScaledObject). Default on when fleet.enabled=true.
+  scaledObject:
+    enabled: true
+    pollingInterval: 15
+    # 0 = profile default (forward: 60, stateful: 300)
+    cooldownPeriod: 0
+    scaleUpStabilizationSeconds: 0
+    scaleDownStabilizationSeconds: 0
+    scaleUpPodsPerPeriod: 0
+    scaleUpPeriodSeconds: 0
+    scaleDownPodsPerPeriod: 0
+    scaleDownPeriodSeconds: 0
+    prometheusPort: "8888"
+    prometheusPath: /metrics
+    metricName: "" # default derived from metric
 
   scalerTrigger:
     metric: exporter_queue_utilization
@@ -72,3 +126,4 @@ fleet:
   datadog:
     secretName: datadog-secret
     secretKey: api-key
+    site: datadoghq.com

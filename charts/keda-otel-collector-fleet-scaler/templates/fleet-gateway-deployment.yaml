@@ -1,0 +1,47 @@
+{{- if .Values.fleet.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "keda-otel-collector-fleet-scaler.gatewayName" . }}
+  namespace: {{ include "keda-otel-collector-fleet-scaler.fleetNamespace" . }}
+  labels:
+    {{- include "keda-otel-collector-fleet-scaler.gatewayLabels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.fleet.gateway.replicas }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ include "keda-otel-collector-fleet-scaler.gatewayName" . }}
+      app.kubernetes.io/instance: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        {{- include "keda-otel-collector-fleet-scaler.gatewayLabels" . | nindent 8 }}
+    spec:
+      serviceAccountName: {{ include "keda-otel-collector-fleet-scaler.gatewayServiceAccountName" . }}
+      containers:
+        - name: otelcol
+          image: {{ .Values.fleet.gateway.image | quote }}
+          imagePullPolicy: {{ .Values.fleet.gateway.imagePullPolicy }}
+          args: ["--config=/conf/collector.yaml"]
+          ports:
+            - name: otlp-grpc
+              containerPort: {{ .Values.fleet.gateway.service.otlpGrpcPort }}
+            - name: otlp-http
+              containerPort: {{ .Values.fleet.gateway.service.otlpHttpPort }}
+            - name: metrics
+              containerPort: {{ .Values.fleet.gateway.service.metricsPort }}
+          volumeMounts:
+            - name: config
+              mountPath: /conf
+          readinessProbe:
+            tcpSocket:
+              port: otlp-grpc
+            initialDelaySeconds: 5
+            periodSeconds: 5
+          resources:
+            {{- toYaml .Values.fleet.gateway.resources | nindent 12 }}
+      volumes:
+        - name: config
+          configMap:
+            name: {{ include "keda-otel-collector-fleet-scaler.gatewayName" . }}-config
+{{- end }}

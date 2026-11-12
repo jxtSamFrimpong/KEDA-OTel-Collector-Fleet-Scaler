@@ -40,11 +40,18 @@ ghcr.io/jxtsamfrimpong/keda-otel-collector-fleet-scaler:sha-<short>
 ```
 
 ```bash
-# Install from the OCI Helm chart (recommended)
+# Install from the OCI Helm chart (recommended) — scaler only
 helm install keda-otel-collector-fleet-scaler \
   oci://ghcr.io/jxtsamfrimpong/charts/keda-otel-collector-fleet-scaler \
-  --version 0.1.1 \
+  --version 0.2.0 \
   -n observability --create-namespace
+
+# Turnkey fleet (gateway + backends + ScaledObject) in the same release
+helm install keda-otel-collector-fleet-scaler \
+  oci://ghcr.io/jxtsamfrimpong/charts/keda-otel-collector-fleet-scaler \
+  --version 0.2.0 \
+  -n observability --create-namespace \
+  --set fleet.enabled=true
 
 # Or pull the image and apply raw manifests
 docker pull ghcr.io/jxtsamfrimpong/keda-otel-collector-fleet-scaler:latest
@@ -73,15 +80,17 @@ Local development:
 make test
 make build
 docker build -t keda-otel-collector-fleet-scaler:dev .
-helm install keda-otel-collector-fleet-scaler charts/keda-otel-collector-fleet-scaler -n observability --create-namespace
+helm install keda-otel-collector-fleet-scaler charts/keda-otel-collector-fleet-scaler \
+  -n observability --create-namespace --set fleet.enabled=true
 ```
 
 ### 2. Deploy a reference fleet
 
-Requires KEDA in the cluster and (for Datadog export) a Secret `datadog-secret`.
+**Preferred:** Helm with `fleet.enabled=true` (chart ≥ 0.2.0). Requires KEDA CRDs when `fleet.scaledObject.enabled=true` (default), and for Datadog export a Secret `datadog-secret`.
+
+Optional kustomize reference (not required for production Helm installs):
 
 ```bash
-kubectl apply -f deploy/scaler/          # if not using Helm for the scaler
 kubectl apply -k deploy/examples/forward   # or deploy/examples/stateful
 ```
 
@@ -98,10 +107,21 @@ Example: `otel-gateway.observability.svc:4317`.
 
 ### External clients
 
-The gateway Service stays **ClusterIP** by default. For optional L4 LoadBalancer access (OTLP **4317** / **4318** only — never the scaler):
+The gateway Service stays **ClusterIP** by default. For optional L4 LoadBalancer access (OTLP **4317** / **4318** only — never the scaler), set Helm values:
+
+```yaml
+fleet:
+  enabled: true
+  gateway:
+    service:
+      type: LoadBalancer
+      annotations:
+        service.beta.kubernetes.io/aws-load-balancer-type: "external"
+        service.beta.kubernetes.io/aws-load-balancer-nlb-target-type: "ip"
+        service.beta.kubernetes.io/aws-load-balancer-scheme: "internal"
+```
 
 ```bash
-kubectl apply -k deploy/examples/external-lb
 kubectl -n observability get svc otel-gateway   # EXTERNAL-IP / hostname
 ```
 
@@ -116,7 +136,7 @@ export OTEL_EXPORTER_OTLP_ENDPOINT=http://<EXTERNAL-IP>:4318
 export OTEL_EXPORTER_OTLP_PROTOCOL=http/protobuf
 ```
 
-Uncomment cloud annotations / `loadBalancerSourceRanges` in the overlay (or base Service comments) for AWS NLB, GCP, Azure, or source IP allowlists. No Ingress in this path.
+`deploy/examples/external-lb` remains an optional kustomize reference. No Ingress in this path.
 
 ## ScaledObject metadata
 
@@ -150,10 +170,11 @@ Artifact Hub indexes public chart repositories; it does not host chart tarballs.
 ```bash
 helm install keda-otel-collector-fleet-scaler \
   oci://ghcr.io/jxtsamfrimpong/charts/keda-otel-collector-fleet-scaler \
-  --version 0.1.1 \
-  -n observability --create-namespace
+  --version 0.2.0 \
+  -n observability --create-namespace \
+  --set fleet.enabled=true
 
-helm show values oci://ghcr.io/jxtsamfrimpong/charts/keda-otel-collector-fleet-scaler --version 0.1.1
+helm show values oci://ghcr.io/jxtsamfrimpong/charts/keda-otel-collector-fleet-scaler --version 0.2.0
 ```
 
 ### List the chart on Artifact Hub (one-time)

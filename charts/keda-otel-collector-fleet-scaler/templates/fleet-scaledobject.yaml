@@ -1,0 +1,56 @@
+{{- if and .Values.fleet.enabled .Values.fleet.scaledObject.enabled }}
+{{- $kind := include "keda-otel-collector-fleet-scaler.backendKind" . -}}
+{{- $profile := include "keda-otel-collector-fleet-scaler.profile" . -}}
+{{- $metric := .Values.fleet.scalerTrigger.metric | default "exporter_queue_utilization" -}}
+{{- $metricName := .Values.fleet.scaledObject.metricName -}}
+{{- if not $metricName -}}
+{{- $metricName = printf "otelcol_backend_%s" $metric -}}
+{{- end -}}
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: {{ include "keda-otel-collector-fleet-scaler.backendName" . }}
+  namespace: {{ include "keda-otel-collector-fleet-scaler.fleetNamespace" . }}
+  labels:
+    {{- include "keda-otel-collector-fleet-scaler.backendLabels" . | nindent 4 }}
+  annotations:
+    keda.otel.collector-fleet.scaler/fleet-profile: {{ $profile }}
+spec:
+  scaleTargetRef:
+    name: {{ include "keda-otel-collector-fleet-scaler.backendName" . }}
+    {{- if eq $kind "StatefulSet" }}
+    kind: StatefulSet
+    {{- end }}
+  pollingInterval: {{ .Values.fleet.scaledObject.pollingInterval | default 15 }}
+  cooldownPeriod: {{ include "keda-otel-collector-fleet-scaler.cooldownPeriod" . }}
+  minReplicaCount: {{ .Values.fleet.backend.minReplicas | default 2 }}
+  maxReplicaCount: {{ .Values.fleet.backend.maxReplicas | default 20 }}
+  advanced:
+    horizontalPodAutoscalerConfig:
+      behavior:
+        scaleUp:
+          stabilizationWindowSeconds: {{ include "keda-otel-collector-fleet-scaler.scaleUpStabilization" . }}
+          policies:
+            - type: Pods
+              value: {{ include "keda-otel-collector-fleet-scaler.scaleUpPods" . }}
+              periodSeconds: {{ include "keda-otel-collector-fleet-scaler.scaleUpPeriod" . }}
+        scaleDown:
+          stabilizationWindowSeconds: {{ include "keda-otel-collector-fleet-scaler.scaleDownStabilization" . }}
+          policies:
+            - type: Pods
+              value: {{ include "keda-otel-collector-fleet-scaler.scaleDownPods" . }}
+              periodSeconds: {{ include "keda-otel-collector-fleet-scaler.scaleDownPeriod" . }}
+  triggers:
+    - type: external
+      metadata:
+        scalerAddress: {{ include "keda-otel-collector-fleet-scaler.scalerAddress" . | quote }}
+        metric: {{ $metric | quote }}
+        targetValue: {{ .Values.fleet.scalerTrigger.targetValue | quote }}
+        aggregation: {{ .Values.fleet.scalerTrigger.aggregation | quote }}
+        backendService: {{ include "keda-otel-collector-fleet-scaler.backendName" . | quote }}
+        backendNamespace: {{ include "keda-otel-collector-fleet-scaler.fleetNamespace" . | quote }}
+        prometheusPort: {{ .Values.fleet.scaledObject.prometheusPort | quote }}
+        prometheusPath: {{ .Values.fleet.scaledObject.prometheusPath | quote }}
+        activationThreshold: {{ .Values.fleet.scalerTrigger.activationThreshold | quote }}
+        metricName: {{ $metricName | quote }}
+{{- end }}

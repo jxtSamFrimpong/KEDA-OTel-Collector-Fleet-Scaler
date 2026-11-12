@@ -1,0 +1,31 @@
+{{- if .Values.fleet.enabled }}
+# Gateway Service: ClusterIP by default (in-cluster OTLP). Set type=LoadBalancer
+# + annotations for AWS LBC NLB / GCP / Azure. Never expose scaler :9090 here.
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "keda-otel-collector-fleet-scaler.gatewayName" . }}
+  namespace: {{ include "keda-otel-collector-fleet-scaler.fleetNamespace" . }}
+  labels:
+    {{- include "keda-otel-collector-fleet-scaler.gatewayLabels" . | nindent 4 }}
+  {{- with .Values.fleet.gateway.service.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  type: {{ .Values.fleet.gateway.service.type }}
+  {{- if and (eq .Values.fleet.gateway.service.type "LoadBalancer") .Values.fleet.gateway.service.loadBalancerSourceRanges }}
+  loadBalancerSourceRanges:
+    {{- toYaml .Values.fleet.gateway.service.loadBalancerSourceRanges | nindent 4 }}
+  {{- end }}
+  selector:
+    app.kubernetes.io/name: {{ include "keda-otel-collector-fleet-scaler.gatewayName" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+  ports:
+    - name: otlp-grpc
+      port: {{ .Values.fleet.gateway.service.otlpGrpcPort }}
+      targetPort: otlp-grpc
+    - name: otlp-http
+      port: {{ .Values.fleet.gateway.service.otlpHttpPort }}
+      targetPort: otlp-http
+{{- end }}

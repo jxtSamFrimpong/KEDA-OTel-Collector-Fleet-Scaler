@@ -2,7 +2,8 @@ apiVersion: v2
 name: keda-otel-collector-fleet-scaler
 description: KEDA external scaler for OpenTelemetry collector fleets (TraceID gateway pattern)
 type: application
-version: 0.1.1
+version: 0.2.0
+# Scaler container image tag (unchanged; fleet templates are chart-only).
 appVersion: "0.1.1"
 keywords:
   - keda
@@ -30,7 +31,9 @@ annotations:
         - linux/amd64
         - linux/arm64
   artifacthub.io/changes: |
-    - kind: fixed
-      description: Republish image as Docker manifest list (no OCI provenance) so Artifact Hub security scanning can resolve ghcr.io tags
     - kind: added
-      description: Initial public chart release with GHCR OCI packaging
+      description: Optional in-chart fleet (gateway, backends, ConfigMaps, gateway RBAC, ScaledObject) gated by fleet.enabled
+    - kind: added
+      description: Gateway Service supports ClusterIP or LoadBalancer with configurable annotations (AWS LBC NLB)
+    - kind: changed
+      description: kustomize deploy/examples remain reference-only; Helm is the primary fleet deploy path
