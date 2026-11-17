@@ -80,8 +80,9 @@ spec:
           configMap:
             name: otel-gateway-config
 ---
-# Gateway Service: ClusterIP by default (in-cluster OTLP only).
-# Opt-in external access: patch type to LoadBalancer (ports 4317/4318 only).
+# Gateway Service: ClusterIP by default (in-cluster + BYO LB compatible).
+# External access: BYO → deploy/examples/byo-lb (TargetGroupBinding);
+# dedicated LB → deploy/examples/external-lb (type=LoadBalancer). Ports 4317/4318 only.
 # Prefer the overlay: kubectl apply -k deploy/examples/external-lb
 # Never expose the scaler gRPC port (:9090) on this Service.
 apiVersion: v1

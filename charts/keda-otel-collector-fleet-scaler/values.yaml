@@ -53,10 +53,18 @@ fleet:
         cpu: "1"
         memory: 512Mi
     # Gateway OTLP Service — never put scaler ports here (OTLP 4317/4318 only).
+    #
+    # External access modes:
+    #   1) BYO LB (preferred): keep type=ClusterIP and wire an existing NLB via
+    #      targetGroupBinding (AWS LBC) or your cloud's equivalent.
+    #   2) Dedicated LB: set type=LoadBalancer (+ cloud annotations) so the
+    #      controller provisions a new NLB/ILB for this Service.
+    # Ingress/ALB is a poor fit for raw OTLP L4 (gRPC/HTTP on 4317/4318).
     service:
-      type: ClusterIP # set LoadBalancer for external OTLP clients
+      create: true
+      type: ClusterIP # ClusterIP = BYO-compatible; LoadBalancer = dedicated LB
       annotations: {}
-      # Examples (when type=LoadBalancer):
+      # Examples (when type=LoadBalancer — dedicated NLB/ILB):
       # annotations:
       #   service.beta.kubernetes.io/aws-load-balancer-type: "external"
       #   service.beta.kubernetes.io/aws-load-balancer-nlb-target-type: "ip"
@@ -69,6 +77,16 @@ fleet:
       otlpGrpcPort: 4317
       otlpHttpPort: 4318
       metricsPort: 8888
+    # Optional AWS Load Balancer Controller TargetGroupBinding(s) for BYO NLB.
+    # Keep service.type=ClusterIP. Requires LBC CRDs + IRSA already on the cluster.
+    # See deploy/examples/byo-lb for a kustomize reference.
+    targetGroupBinding:
+      enabled: false
+      targetType: ip # ip | instance
+      # Target group ARNs on an existing NLB (listener → TG → pods).
+      # Leave either ARN empty to skip that port's binding.
+      otlpGrpcTargetGroupARN: ""
+      otlpHttpTargetGroupARN: ""
 
   backend:
     name: otel-backends

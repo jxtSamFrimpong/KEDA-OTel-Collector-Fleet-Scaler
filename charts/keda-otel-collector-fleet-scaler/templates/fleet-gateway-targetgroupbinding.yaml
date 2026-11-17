@@ -1,0 +1,46 @@
+{{- if and .Values.fleet.enabled .Values.fleet.gateway.targetGroupBinding.enabled }}
+{{- $gwName := include "keda-otel-collector-fleet-scaler.gatewayName" . }}
+{{- $ns := include "keda-otel-collector-fleet-scaler.fleetNamespace" . }}
+{{- $tt := .Values.fleet.gateway.targetGroupBinding.targetType | default "ip" }}
+{{- $grpcARN := .Values.fleet.gateway.targetGroupBinding.otlpGrpcTargetGroupARN }}
+{{- $httpARN := .Values.fleet.gateway.targetGroupBinding.otlpHttpTargetGroupARN }}
+{{- if and (not $grpcARN) (not $httpARN) }}
+{{- fail "fleet.gateway.targetGroupBinding.enabled=true requires otlpGrpcTargetGroupARN and/or otlpHttpTargetGroupARN" }}
+{{- end }}
+{{- if $grpcARN }}
+# BYO NLB: register gateway pods in an existing target group (OTLP gRPC).
+# Requires AWS Load Balancer Controller + TargetGroupBinding CRD.
+apiVersion: elbv2.k8s.aws/v1beta1
+kind: TargetGroupBinding
+metadata:
+  name: {{ $gwName }}-otlp-grpc
+  namespace: {{ $ns }}
+  labels:
+    {{- include "keda-otel-collector-fleet-scaler.gatewayLabels" . | nindent 4 }}
+spec:
+  serviceRef:
+    name: {{ $gwName }}
+    port: {{ .Values.fleet.gateway.service.otlpGrpcPort }}
+  targetGroupARN: {{ $grpcARN | quote }}
+  targetType: {{ $tt }}
+{{- end }}
+{{- if and $grpcARN $httpARN }}
+---
+{{- end }}
+{{- if $httpARN }}
+# BYO NLB: register gateway pods in an existing target group (OTLP HTTP).
+apiVersion: elbv2.k8s.aws/v1beta1
+kind: TargetGroupBinding
+metadata:
+  name: {{ $gwName }}-otlp-http
+  namespace: {{ $ns }}
+  labels:
+    {{- include "keda-otel-collector-fleet-scaler.gatewayLabels" . | nindent 4 }}
+spec:
+  serviceRef:
+    name: {{ $gwName }}
+    port: {{ .Values.fleet.gateway.service.otlpHttpPort }}
+  targetGroupARN: {{ $httpARN | quote }}
+  targetType: {{ $tt }}
+{{- end }}
+{{- end }}

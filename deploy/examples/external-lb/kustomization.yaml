@@ -1,4 +1,5 @@
-# Opt-in L4 LoadBalancer for external OTLP clients (ports 4317 + 4318 only).
+# Dedicated L4 LoadBalancer for external OTLP clients (ports 4317 + 4318 only).
+# Prefer deploy/examples/byo-lb when reusing an existing NLB (TargetGroupBinding).
 # Lives beside forward/ (not under it) so kubectl kustomize does not hit a
 # nested-root cycle with newer kustomize builds.
 #

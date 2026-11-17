@@ -1,0 +1,28 @@
+# BYO LoadBalancer: keep gateway Service as ClusterIP and bind pods to
+# existing AWS NLB target groups via TargetGroupBinding (AWS LBC).
+#
+# Prefer this over type=LoadBalancer when you already have an NLB (or want
+# platform teams to own LB lifecycle outside the chart).
+#
+#   kubectl apply -k deploy/examples/forward
+#   # edit targetgroupbinding.yaml ARNs, then:
+#   kubectl apply -k deploy/examples/byo-lb
+#
+# Or in one shot after filling ARNs:
+#
+#   kubectl apply -k deploy/examples/byo-lb
+#
+# Prerequisites:
+#   - AWS Load Balancer Controller installed (TargetGroupBinding CRD)
+#   - Existing NLB + target groups for TCP 4317 and/or 4318 (target-type ip)
+#   - Node/pod security groups allow traffic from the NLB / TG security group
+#
+# Why not Ingress/ALB? Raw OTLP is L4 (gRPC + HTTP/protobuf on fixed ports).
+# ALB/Ingress path rules and HTTP-only semantics are a poor fit; use NLB + TGB.
+#
+# Never expose the scaler :9090 here.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - ../forward
+  - targetgroupbinding.yaml

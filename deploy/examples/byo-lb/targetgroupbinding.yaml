@@ -1,0 +1,35 @@
+# Replace REPLACE_WITH_* ARNs with target groups attached to your existing NLB.
+# Listeners: TCP 4317 → grpc TG, TCP 4318 → http TG. target-type must match
+# the TG (ip recommended for EKS pods).
+#
+# Gateway Service stays ClusterIP (see deploy/examples/forward/gateway.yaml).
+# Do not also set type=LoadBalancer — that provisions a second dedicated LB.
+apiVersion: elbv2.k8s.aws/v1beta1
+kind: TargetGroupBinding
+metadata:
+  name: otel-gateway-otlp-grpc
+  namespace: observability
+  labels:
+    app.kubernetes.io/name: otel-gateway
+    app.kubernetes.io/component: gateway
+spec:
+  serviceRef:
+    name: otel-gateway
+    port: 4317
+  targetGroupARN: REPLACE_WITH_OTLP_GRPC_TARGET_GROUP_ARN
+  targetType: ip
+---
+apiVersion: elbv2.k8s.aws/v1beta1
+kind: TargetGroupBinding
+metadata:
+  name: otel-gateway-otlp-http
+  namespace: observability
+  labels:
+    app.kubernetes.io/name: otel-gateway
+    app.kubernetes.io/component: gateway
+spec:
+  serviceRef:
+    name: otel-gateway
+    port: 4318
+  targetGroupARN: REPLACE_WITH_OTLP_HTTP_TARGET_GROUP_ARN
+  targetType: ip

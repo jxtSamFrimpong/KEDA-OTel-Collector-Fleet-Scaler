@@ -1,6 +1,9 @@
-{{- if .Values.fleet.enabled }}
-# Gateway Service: ClusterIP by default (in-cluster OTLP). Set type=LoadBalancer
-# + annotations for AWS LBC NLB / GCP / Azure. Never expose scaler :9090 here.
+{{- /* dig (not default): Sprig default treats false as empty and would ignore create=false */ -}}
+{{- if and .Values.fleet.enabled (dig "create" true .Values.fleet.gateway.service) }}
+# Gateway Service: ClusterIP by default (BYO-compatible). Set type=LoadBalancer
+# + annotations for a dedicated AWS LBC NLB / GCP / Azure LB.
+# Never expose scaler :9090 here. Prefer TargetGroupBinding for reuse of an
+# existing NLB (fleet.gateway.targetGroupBinding).
 apiVersion: v1
 kind: Service
 metadata:
