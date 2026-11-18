@@ -53,7 +53,8 @@ flowchart TB
 
 BYO keeps LB lifecycle outside the chart: platform owns the NLB and target groups;
 the chart only creates ClusterIP Service + optional `TargetGroupBinding` CRs.
-See Helm values `fleet.gateway.targetGroupBinding` and `deploy/examples/byo-lb`.
+See [BYO Load Balancer](byo-load-balancer.md), Helm values
+`fleet.gateway.targetGroupBinding`, and `deploy/examples/byo-lb`.
 
 **Why not Ingress / ALB?** Raw OTLP is L4 (gRPC and HTTP/protobuf on fixed ports
 4317/4318). ALB/Ingress path-based HTTP routing does not map cleanly to that

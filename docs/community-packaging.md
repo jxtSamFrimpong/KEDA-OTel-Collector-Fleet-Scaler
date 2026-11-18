@@ -19,7 +19,7 @@
 │       ├── byo-lb/         # BYO NLB via TargetGroupBinding (ClusterIP gateway)
 │       └── stateful/       # Tail-sampling example
 ├── charts/keda-otel-collector-fleet-scaler/# Helm chart (scaler + optional in-chart fleet via fleet.enabled)
-├── docs/                   # Architecture and contracts
+├── docs/                   # Architecture, BYO LB, contracts
 ├── hack/                   # Codegen scripts
 └── test/                   # Unit + e2e placeholders
 ```
@@ -68,7 +68,7 @@ Anonymous check: `docker logout ghcr.io` then `docker manifest inspect ghcr.io/j
 - [ ] Preserve `forward` / `stateful` profile presets when changing defaults
 - [ ] Add unit tests for metadata parsing and metric aggregation
 - [ ] Run `make test` and `make build` before PR
-- [ ] Update `docs/` when changing scaler behavior
+- [ ] Update `docs/` when changing scaler behavior (incl. [byo-load-balancer.md](byo-load-balancer.md) for gateway access)
 
 ## Release shape
 

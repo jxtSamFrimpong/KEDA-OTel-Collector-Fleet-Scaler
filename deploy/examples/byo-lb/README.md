@@ -4,6 +4,8 @@ Keep the gateway Service as **ClusterIP** and register pods into target groups
 on an **existing** Network Load Balancer via AWS Load Balancer Controller
 `TargetGroupBinding`.
 
+Canonical guide: [docs/byo-load-balancer.md](../../../docs/byo-load-balancer.md).
+
 ## When to use
 
 | Mode | How | Use when |

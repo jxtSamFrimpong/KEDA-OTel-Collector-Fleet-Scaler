@@ -129,6 +129,7 @@ fleet:
       otlpHttpTargetGroupARN: arn:aws:elasticloadbalancing:REGION:ACCOUNT:targetgroup/otel-http/...
 ```
 
+Full walkthrough: [docs/byo-load-balancer.md](docs/byo-load-balancer.md).
 Kustomize reference: `deploy/examples/byo-lb` (fill in TG ARNs first).
 
 **Dedicated LoadBalancer:**
@@ -160,7 +161,7 @@ export OTEL_EXPORTER_OTLP_ENDPOINT=http://<NLB-DNS-OR-IP>:4318
 export OTEL_EXPORTER_OTLP_PROTOCOL=http/protobuf
 ```
 
-`deploy/examples/external-lb` is the dedicated-LB kustomize reference. Prefer NLB over Ingress/ALB for raw OTLP L4 — see [docs/architecture.md](docs/architecture.md).
+`deploy/examples/external-lb` is the dedicated-LB kustomize reference. Prefer NLB over Ingress/ALB for raw OTLP L4 — see [docs/byo-load-balancer.md](docs/byo-load-balancer.md) and [docs/architecture.md](docs/architecture.md).
 
 ## ScaledObject metadata
 
