@@ -27,6 +27,8 @@ Apps → Gateway Collectors (HA, load_balancing/TraceID)
 
 Not the same as [Kedify otel-add-on](https://github.com/kedify/otel-add-on) (that scales **apps** from OTel metrics).
 
+**New here?** Start with **[quickstart.md](quickstart.md)** — product overview, prerequisites, scaler-only and fleet Helm installs, ScaledObject / gRPC verify, and BYO LB pointers.
+
 ## Quick start
 
 ### 1. Pull / install the scaler
@@ -43,13 +45,13 @@ ghcr.io/jxtsamfrimpong/keda-otel-collector-fleet-scaler:sha-<short>
 # Install from the OCI Helm chart (recommended) — scaler only
 helm install keda-otel-collector-fleet-scaler \
   oci://ghcr.io/jxtsamfrimpong/charts/keda-otel-collector-fleet-scaler \
-  --version 0.2.1 \
+  --version 0.2.2 \
   -n observability --create-namespace
 
 # Turnkey fleet (gateway + backends + ScaledObject) in the same release
 helm install keda-otel-collector-fleet-scaler \
   oci://ghcr.io/jxtsamfrimpong/charts/keda-otel-collector-fleet-scaler \
-  --version 0.2.1 \
+  --version 0.2.2 \
   -n observability --create-namespace \
   --set fleet.enabled=true
 
@@ -195,11 +197,11 @@ Artifact Hub indexes public chart repositories; it does not host chart tarballs.
 ```bash
 helm install keda-otel-collector-fleet-scaler \
   oci://ghcr.io/jxtsamfrimpong/charts/keda-otel-collector-fleet-scaler \
-  --version 0.2.1 \
+  --version 0.2.2 \
   -n observability --create-namespace \
   --set fleet.enabled=true
 
-helm show values oci://ghcr.io/jxtsamfrimpong/charts/keda-otel-collector-fleet-scaler --version 0.2.1
+helm show values oci://ghcr.io/jxtsamfrimpong/charts/keda-otel-collector-fleet-scaler --version 0.2.2
 ```
 
 ### List the chart on Artifact Hub (one-time)
@@ -222,11 +224,13 @@ Official docs: [Helm charts on Artifact Hub](https://artifacthub.io/docs/topics/
 
 ## Documentation
 
+- [Quickstart](quickstart.md) — install and use
 - [Architecture](docs/architecture.md)
 - [Scale metrics](docs/scale-metrics.md) (plain-language guide)
 - [Metric contract](docs/metric-contract.md)
 - [Fleet profiles](docs/fleet-profiles.md)
 - [Scale safety](docs/scale-safety.md)
+- [BYO load balancer](docs/byo-load-balancer.md)
 - [Community packaging](docs/community-packaging.md)
 
 ## Development

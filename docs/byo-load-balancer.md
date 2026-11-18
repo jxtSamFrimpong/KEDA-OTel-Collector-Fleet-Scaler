@@ -68,7 +68,7 @@ Install (example):
 ```bash
 helm upgrade --install keda-otel-collector-fleet-scaler \
   oci://ghcr.io/jxtsamfrimpong/charts/keda-otel-collector-fleet-scaler \
-  --version 0.2.1 \
+  --version 0.2.2 \
   -n observability --create-namespace \
   -f values-byo.yaml
 ```

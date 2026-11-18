@@ -1,8 +1,11 @@
 apiVersion: v2
 name: keda-otel-collector-fleet-scaler
-description: KEDA external scaler for OpenTelemetry collector fleets (TraceID gateway pattern)
+description: >-
+  KEDA external scaler for OpenTelemetry collector fleets using the TraceID
+  load_balancing gateway pattern. Installs the scaler by default; optionally
+  deploys a reference gateway + backends + ScaledObject (fleet.enabled).
 type: application
-version: 0.2.1
+version: 0.2.2
 # Scaler container image tag (unchanged; fleet templates are chart-only).
 appVersion: "0.1.1"
 keywords:
@@ -20,6 +23,16 @@ annotations:
   artifacthub.io/category: monitoring-logging
   artifacthub.io/prerelease: "false"
   artifacthub.io/links: |
+    - name: Quickstart
+      url: https://github.com/jxtSamFrimpong/KEDA-OTel-Collector-Fleet-Scaler/blob/main/quickstart.md
+    - name: Documentation
+      url: https://github.com/jxtSamFrimpong/KEDA-OTel-Collector-Fleet-Scaler/tree/main/docs
+    - name: Architecture
+      url: https://github.com/jxtSamFrimpong/KEDA-OTel-Collector-Fleet-Scaler/blob/main/docs/architecture.md
+    - name: Metric contract
+      url: https://github.com/jxtSamFrimpong/KEDA-OTel-Collector-Fleet-Scaler/blob/main/docs/metric-contract.md
+    - name: BYO load balancer
+      url: https://github.com/jxtSamFrimpong/KEDA-OTel-Collector-Fleet-Scaler/blob/main/docs/byo-load-balancer.md
     - name: source
       url: https://github.com/jxtSamFrimpong/KEDA-OTel-Collector-Fleet-Scaler
     - name: support
@@ -32,12 +45,14 @@ annotations:
         - linux/arm64
   artifacthub.io/changes: |
     - kind: added
+      description: Chart README with product overview and install/use for Artifact Hub
+    - kind: added
+      description: Repository quickstart.md; Artifact Hub links to quickstart, docs, architecture, metric contract, BYO LB
+    - kind: changed
+      description: Richer Chart.yaml description for the Artifact Hub package listing
+    - kind: added
       description: BYO LoadBalancer support via fleet.gateway.targetGroupBinding (AWS LBC) while keeping gateway Service ClusterIP
     - kind: added
       description: fleet.gateway.service.create knob (default true) to skip Service creation when managed externally
     - kind: added
       description: Optional in-chart fleet (gateway, backends, ConfigMaps, gateway RBAC, ScaledObject) gated by fleet.enabled
-    - kind: added
-      description: Gateway Service supports ClusterIP (BYO) or LoadBalancer (dedicated) with configurable annotations
-    - kind: changed
-      description: kustomize deploy/examples remain reference-only; Helm is the primary fleet deploy path
